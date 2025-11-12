@@ -1,117 +1,177 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cloud, Mail, ArrowRight, Check, Moon, Bell } from 'lucide-react';
-import './Login.css';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('admin@tasksystemcore.com');
+  const [password, setPassword] = useState('admin123');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login, register, isAuthenticated } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simular login
+  if (isAuthenticated) {
     navigate('/dashboard');
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        await login(email, password);
+      } else {
+        if (!name) {
+          setError('El nombre es requerido para el registro');
+          setLoading(false);
+          return;
+        }
+        await register(email, password, name);
+      }
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Ocurrió un error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="login-page">
-      <header className="login-header">
-        <div className="login-logo">
-          <div className="login-logo-icon"></div>
-          <span>TaskSystemCore</span>
+    <div className="min-h-screen bg-white">
+      <header className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-blue-600 rounded-md"></div>
+          <span className="text-lg font-semibold text-gray-900">TaskSystemCore</span>
         </div>
-        <div className="login-header-right">
-          <button className="icon-button">
+        <div className="flex gap-4">
+          <Button variant="ghost" size="icon">
             <Moon size={20} />
-          </button>
-          <button className="icon-button">
+          </Button>
+          <Button variant="ghost" size="icon">
             <Bell size={20} />
-          </button>
+          </Button>
         </div>
       </header>
 
-      <div className="login-container">
-        <div className="login-card">
-          <div className="login-welcome">
-            <div className="welcome-icon"></div>
-            <h2>Welcome back</h2>
-            <p>Access your support workspace to manage tickets, clients, and reports.</p>
-            <ul className="welcome-features">
-              <li>
-                <Check size={16} />
-                <span>SSO ready</span>
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-8">
+        <Card className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 shadow-lg">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-12 flex flex-col gap-6 rounded-l-lg">
+            <div className="w-12 h-12 bg-blue-600 rounded-lg mb-2"></div>
+            <h2 className="text-3xl font-semibold text-gray-900">Bienvenido de nuevo</h2>
+            <p className="text-gray-600 leading-relaxed">
+              Accede a tu espacio de trabajo de soporte para gestionar tickets, clientes y reportes.
+            </p>
+            <ul className="flex flex-col gap-3">
+              <li className="flex items-center gap-3 text-gray-700">
+                <Check size={16} className="text-green-600 flex-shrink-0" />
+                <span>Listo para SSO</span>
               </li>
-              <li>
-                <Check size={16} />
-                <span>Secure by design</span>
+              <li className="flex items-center gap-3 text-gray-700">
+                <Check size={16} className="text-green-600 flex-shrink-0" />
+                <span>Seguro por diseño</span>
               </li>
-              <li>
-                <Check size={16} />
-                <span>Fast onboarding</span>
+              <li className="flex items-center gap-3 text-gray-700">
+                <Check size={16} className="text-green-600 flex-shrink-0" />
+                <span>Configuración rápida</span>
               </li>
             </ul>
           </div>
 
-          <div className="login-form-container">
-            <div className="login-tabs">
-              <button
-                className={isLogin ? 'tab active' : 'tab'}
-                onClick={() => setIsLogin(true)}
-              >
-                Login
-              </button>
-              <button
-                className={!isLogin ? 'tab active' : 'tab'}
-                onClick={() => setIsLogin(false)}
-              >
-                Register
-              </button>
-            </div>
+          <div className="p-12">
+            <Tabs value={isLogin ? 'login' : 'register'} onValueChange={(v) => setIsLogin(v === 'login')}>
+              <TabsList className="grid w-full grid-cols-2 mb-8">
+                <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+                <TabsTrigger value="register">Registrarse</TabsTrigger>
+              </TabsList>
 
-            <form onSubmit={handleSubmit} className="login-form">
-              <div className="form-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  placeholder="name@company.com"
-                  defaultValue="name@company.com"
-                />
-              </div>
+              <TabsContent value={isLogin ? 'login' : 'register'}>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {error && (
+                    <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
+                      {error}
+                    </div>
+                  )}
 
-              <div className="form-group">
-                <label>Password</label>
-                <input type="password" defaultValue="••••••••" />
-              </div>
+                  {!isLogin && (
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nombre</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="Tu nombre"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required={!isLogin}
+                      />
+                    </div>
+                  )}
 
-              <div className="form-actions">
-                <a href="#" className="forgot-password">Forgot your password?</a>
-                <button type="submit" className="btn-primary">
-                  Sign in
-                  <ArrowRight size={18} />
-                </button>
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Correo Electrónico</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="nombre@empresa.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
 
-              <div className="login-alternatives">
-                <button type="button" className="btn-alternative">
-                  <Cloud size={18} />
-                  SAML SSO
-                </button>
-                <button type="button" className="btn-alternative">
-                  <Mail size={18} />
-                  Magic Link
-                </button>
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Contraseña</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
 
-              <p className="login-terms">
-                By continuing you agree to the Terms and Privacy Policy.
-              </p>
-            </form>
+                  <div className="flex items-center justify-between">
+                    <a href="#" className="text-sm text-blue-600 hover:underline">
+                      ¿Olvidaste tu contraseña?
+                    </a>
+                    <Button type="submit" disabled={loading}>
+                      {loading ? 'Cargando...' : isLogin ? 'Iniciar Sesión' : 'Registrarse'}
+                      <ArrowRight size={18} className="ml-2" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button type="button" variant="outline" className="w-full">
+                      <Cloud size={18} className="mr-2" />
+                      SAML SSO
+                    </Button>
+                    <Button type="button" variant="outline" className="w-full">
+                      <Mail size={18} className="mr-2" />
+                      Magic Link
+                    </Button>
+                  </div>
+
+                  <p className="text-xs text-gray-500 text-center">
+                    Al continuar, aceptas los Términos y la Política de Privacidad.
+                  </p>
+                </form>
+              </TabsContent>
+            </Tabs>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
 };
 
 export default Login;
-

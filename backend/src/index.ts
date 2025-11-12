@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { seedDatabase } from './data/seeders';
+import { seedDatabase } from './db/seed';
 
 // Routes
 import authRoutes from './routes/authRoutes';
@@ -55,7 +55,13 @@ app.use('/api/dashboard', dashboardRoutes);
 
 // Seed database on startup (only in development)
 if (process.env.NODE_ENV !== 'production') {
-  seedDatabase().catch(console.error);
+  seedDatabase()
+    .then(() => {
+      console.log('✅ Base de datos inicializada');
+    })
+    .catch((error) => {
+      console.error('❌ Error inicializando base de datos:', error);
+    });
 }
 
 // Start server

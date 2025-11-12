@@ -1,78 +1,163 @@
-import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { users } from '../db/schema';
 import { User as IUser, UserRole } from '../types';
 
 export class UserModel {
-  private static users: IUser[] = [];
-
   static async create(data: Omit<IUser, 'id' | 'createdAt' | 'updatedAt' | 'password' | 'isActive'> & { password: string }): Promise<IUser> {
     const hashedPassword = await bcrypt.hash(data.password, 10);
     
-    const user: IUser = {
-      id: uuidv4(),
-      ...data,
+    const [user] = await db.insert(users).values({
+      email: data.email,
       password: hashedPassword,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      isActive: true
-    };
+      name: data.name,
+      role: data.role.toLowerCase() as 'admin' | 'agent' | 'client' | 'manager',
+      avatar: data.avatar,
+      isActive: true,
+    }).returning();
 
-    this.users.push(user);
-    return { ...user, password: '' } as IUser;
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role.toUpperCase() as UserRole,
+      avatar: user.avatar || undefined,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      password: '',
+    };
   }
 
   static async findByEmail(email: string): Promise<IUser | null> {
-    const user = this.users.find(u => u.email === email);
-    return user || null;
+    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    
+    if (!user) return null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role.toUpperCase() as UserRole,
+      avatar: user.avatar || undefined,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      password: user.password, // Necesario para comparar contraseñas
+    };
   }
 
   static async findById(id: string): Promise<IUser | null> {
-    const user = this.users.find(u => u.id === id);
-    return user ? { ...user, password: '' } as IUser : null;
+    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    
+    if (!user) return null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role.toUpperCase() as UserRole,
+      avatar: user.avatar || undefined,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      password: '',
+    };
   }
 
   static async findAll(): Promise<IUser[]> {
-    return this.users.map(u => ({ ...u, password: '' } as IUser));
+    const allUsers = await db.select().from(users);
+    
+    return allUsers.map(user => ({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role.toUpperCase() as UserRole,
+      avatar: user.avatar || undefined,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      password: '',
+    }));
   }
 
   static async update(id: string, data: Partial<Omit<IUser, 'id' | 'password' | 'createdAt'>> & { password?: string }): Promise<IUser | null> {
-    const index = this.users.findIndex(u => u.id === id);
-    if (index === -1) return null;
-
     const updateData: any = { ...data };
+    
     if (data.password) {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
+    
+    if (data.role) {
+      updateData.role = data.role.toLowerCase();
+    }
 
-    this.users[index] = {
-      ...this.users[index],
-      ...updateData,
-      updatedAt: new Date()
+    updateData.updatedAt = new Date();
+
+    const [updated] = await db.update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
+
+    if (!updated) return null;
+
+    return {
+      id: updated.id,
+      email: updated.email,
+      name: updated.name,
+      role: updated.role.toUpperCase() as UserRole,
+      avatar: updated.avatar || undefined,
+      isActive: updated.isActive,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+      password: '',
     };
-
-    return { ...this.users[index], password: '' } as IUser;
   }
 
   static async delete(id: string): Promise<boolean> {
-    const index = this.users.findIndex(u => u.id === id);
-    if (index === -1) return false;
-    
-    this.users.splice(index, 1);
-    return true;
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   static async findByRole(role: UserRole): Promise<IUser[]> {
-    return this.users
-      .filter(u => u.role === role)
-      .map(u => ({ ...u, password: '' } as IUser));
+    const roleUsers = await db.select()
+      .from(users)
+      .where(eq(users.role, role.toLowerCase() as 'admin' | 'agent' | 'client' | 'manager'));
+    
+    return roleUsers.map(user => ({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role.toUpperCase() as UserRole,
+      avatar: user.avatar || undefined,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      password: '',
+    }));
   }
 
   static async comparePassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  static getUsers(): IUser[] {
-    return this.users;
+  // Método auxiliar para obtener usuarios con contraseña (solo para autenticación)
+  static async getUserWithPassword(email: string): Promise<IUser | null> {
+    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    
+    if (!user) return null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role.toUpperCase() as UserRole,
+      avatar: user.avatar || undefined,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      password: user.password,
+    };
   }
 }
-

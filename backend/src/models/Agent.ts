@@ -1,70 +1,131 @@
-import { v4 as uuidv4 } from 'uuid';
+import { eq, and } from 'drizzle-orm';
+import { db } from '../db';
+import { agents } from '../db/schema';
 import { Agent as IAgent, AgentStatus } from '../types';
 
 export class AgentModel {
-  private static agents: IAgent[] = [];
+  static async create(data: Omit<IAgent, 'id' | 'createdAt' | 'updatedAt'>): Promise<IAgent> {
+    const [agent] = await db.insert(agents).values({
+      userId: data.userId,
+      team: data.team,
+      status: data.status.toLowerCase().replace('_', '_') as 'online' | 'away' | 'offline' | 'at_capacity',
+      maxTickets: data.maxTickets || 10,
+    }).returning();
 
-  static create(data: Omit<IAgent, 'id' | 'createdAt' | 'updatedAt'>): IAgent {
-    const agent: IAgent = {
-      id: uuidv4(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    return {
+      id: agent.id,
+      userId: agent.userId,
+      team: agent.team || undefined,
+      status: agent.status.toUpperCase().replace('_', '_') as AgentStatus,
+      maxTickets: agent.maxTickets,
+      createdAt: agent.createdAt,
+      updatedAt: agent.updatedAt,
     };
-
-    this.agents.push(agent);
-    return agent;
   }
 
-  static findById(id: string): IAgent | null {
-    return this.agents.find(a => a.id === id) || null;
+  static async findById(id: string): Promise<IAgent | null> {
+    const [agent] = await db.select().from(agents).where(eq(agents.id, id)).limit(1);
+    
+    if (!agent) return null;
+
+    return {
+      id: agent.id,
+      userId: agent.userId,
+      team: agent.team || undefined,
+      status: agent.status.toUpperCase().replace('_', '_') as AgentStatus,
+      maxTickets: agent.maxTickets,
+      createdAt: agent.createdAt,
+      updatedAt: agent.updatedAt,
+    };
   }
 
-  static findByUserId(userId: string): IAgent | null {
-    return this.agents.find(a => a.userId === userId) || null;
+  static async findByUserId(userId: string): Promise<IAgent | null> {
+    const [agent] = await db.select().from(agents).where(eq(agents.userId, userId)).limit(1);
+    
+    if (!agent) return null;
+
+    return {
+      id: agent.id,
+      userId: agent.userId,
+      team: agent.team || undefined,
+      status: agent.status.toUpperCase().replace('_', '_') as AgentStatus,
+      maxTickets: agent.maxTickets,
+      createdAt: agent.createdAt,
+      updatedAt: agent.updatedAt,
+    };
   }
 
-  static findAll(filters?: {
+  static async findAll(filters?: {
     team?: string;
     status?: AgentStatus;
-  }): IAgent[] {
-    let result = [...this.agents];
+  }): Promise<IAgent[]> {
+    let query = db.select().from(agents);
 
     if (filters) {
+      const conditions = [];
       if (filters.team) {
-        result = result.filter(a => a.team === filters.team);
+        conditions.push(eq(agents.team, filters.team));
       }
       if (filters.status) {
-        result = result.filter(a => a.status === filters.status);
+        conditions.push(eq(agents.status, filters.status.toLowerCase().replace('_', '_') as any));
+      }
+      if (conditions.length > 0) {
+        query = db.select().from(agents).where(and(...conditions));
       }
     }
 
-    return result;
+    const allAgents = await query;
+    return allAgents.map(agent => ({
+      id: agent.id,
+      userId: agent.userId,
+      team: agent.team || undefined,
+      status: agent.status.toUpperCase().replace('_', '_') as AgentStatus,
+      maxTickets: agent.maxTickets,
+      createdAt: agent.createdAt,
+      updatedAt: agent.updatedAt,
+    }));
   }
 
-  static update(id: string, data: Partial<Omit<IAgent, 'id' | 'createdAt'>>): IAgent | null {
-    const index = this.agents.findIndex(a => a.id === id);
-    if (index === -1) return null;
-
-    this.agents[index] = {
-      ...this.agents[index],
-      ...data,
-      updatedAt: new Date()
-    };
-
-    return this.agents[index];
-  }
-
-  static delete(id: string): boolean {
-    const index = this.agents.findIndex(a => a.id === id);
-    if (index === -1) return false;
+  static async update(id: string, data: Partial<Omit<IAgent, 'id' | 'createdAt'>>): Promise<IAgent | null> {
+    const updateData: any = { ...data, updatedAt: new Date() };
     
-    this.agents.splice(index, 1);
-    return true;
+    if (data.status) {
+      updateData.status = data.status.toLowerCase().replace('_', '_');
+    }
+
+    const [updated] = await db.update(agents)
+      .set(updateData)
+      .where(eq(agents.id, id))
+      .returning();
+
+    if (!updated) return null;
+
+    return {
+      id: updated.id,
+      userId: updated.userId,
+      team: updated.team || undefined,
+      status: updated.status.toUpperCase().replace('_', '_') as AgentStatus,
+      maxTickets: updated.maxTickets,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+    };
   }
 
-  static getAgents(): IAgent[] {
-    return this.agents;
+  static async delete(id: string): Promise<boolean> {
+    const result = await db.delete(agents).where(eq(agents.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  static async getAgents(): Promise<IAgent[]> {
+    const results = await db.select().from(agents);
+    return results.map(agent => ({
+      id: agent.id,
+      userId: agent.userId,
+      team: agent.team || undefined,
+      status: agent.status.toUpperCase().replace('_', '_') as AgentStatus,
+      maxTickets: agent.maxTickets,
+      createdAt: agent.createdAt,
+      updatedAt: agent.updatedAt,
+    }));
   }
 }
-

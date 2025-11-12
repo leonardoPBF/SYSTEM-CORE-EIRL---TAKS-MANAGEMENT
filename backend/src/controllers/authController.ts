@@ -8,13 +8,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const { email, password, name, role } = req.body;
 
     if (!email || !password || !name) {
-      res.status(400).json({ error: 'Email, password and name are required' });
+      res.status(400).json({ error: 'Se requieren correo electrónico, contraseña y nombre' });
       return;
     }
 
     const existingUser = await UserModel.findByEmail(email);
     if (existingUser) {
-      res.status(400).json({ error: 'User already exists' });
+      res.status(400).json({ error: 'El usuario ya existe' });
       return;
     }
 
@@ -41,7 +41,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       token
     });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -50,32 +50,31 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      res.status(400).json({ error: 'Email and password are required' });
+      res.status(400).json({ error: 'Se requieren correo electrónico y contraseña' });
       return;
     }
 
     const user = await UserModel.findByEmail(email);
     if (!user) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ error: 'Credenciales inválidas' });
       return;
     }
 
-    const users = UserModel.getUsers();
-    const userWithPassword = users.find(u => u.id === user.id);
+    const userWithPassword = await UserModel.getUserWithPassword(email);
     
     if (!userWithPassword) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ error: 'Credenciales inválidas' });
       return;
     }
 
     const isValid = await UserModel.comparePassword(password, userWithPassword.password);
     if (!isValid) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ error: 'Credenciales inválidas' });
       return;
     }
 
     if (!user.isActive) {
-      res.status(403).json({ error: 'Account is deactivated' });
+      res.status(403).json({ error: 'La cuenta está desactivada' });
       return;
     }
 
@@ -96,7 +95,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       token
     });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -106,13 +105,13 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
     const userId = authReq.user?.userId;
 
     if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).json({ error: 'No autorizado' });
       return;
     }
 
     const user = await UserModel.findById(userId);
     if (!user) {
-      res.status(404).json({ error: 'User not found' });
+      res.status(404).json({ error: 'Usuario no encontrado' });
       return;
     }
 
@@ -125,7 +124,7 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
       isActive: user.isActive
     });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 

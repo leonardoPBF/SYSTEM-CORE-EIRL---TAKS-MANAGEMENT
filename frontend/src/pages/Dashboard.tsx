@@ -1,22 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Users, 
-  Ticket, 
-  AlertCircle, 
-  TrendingUp,
   Filter,
   Save
 } from 'lucide-react';
-import './Dashboard.css';
+import { dashboardAPI } from '@/services/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 const Dashboard = () => {
   const [timeRange, setTimeRange] = useState('Today');
+  const [metrics, setMetrics] = useState({
+    agentsOnline: 0,
+    unassignedTickets: 0,
+    queuesBreachingSoon: 0,
+    avgLoadPerAgent: 0
+  });
+  const [loading, setLoading] = useState(true);
 
-  const metrics = {
-    agentsOnline: 21,
-    unassignedTickets: 37,
-    queuesBreachingSoon: 5,
-    avgLoadPerAgent: 8.4
+  useEffect(() => {
+    loadMetrics();
+  }, []);
+
+  const loadMetrics = async () => {
+    try {
+      setLoading(true);
+      const data = await dashboardAPI.getMetrics();
+      setMetrics(data);
+    } catch (error) {
+      console.error('Error loading metrics:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const agents = [
@@ -27,173 +43,225 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <h1>Dashboard</h1>
-        <div className="dashboard-controls">
-          <div className="time-range">
-            {['Today', '7d', '30d'].map((range) => (
+    <div className="max-w-7xl">
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <h1 className="text-3xl font-semibold text-gray-900">Panel de Control</h1>
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+            {['Hoy', '7d', '30d'].map((range) => (
               <button
                 key={range}
-                className={timeRange === range ? 'active' : ''}
+                className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                  timeRange === range
+                    ? 'bg-white text-gray-900 font-medium shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
                 onClick={() => setTimeRange(range)}
               >
                 {range}
               </button>
             ))}
           </div>
-          <div className="filters">
-            <button className="filter-btn">
-              <Users size={16} />
-              All teams
-            </button>
-            <button className="filter-btn">
-              <Users size={16} />
-              Role: Admin
-            </button>
-            <button className="save-view-btn">
-              <Save size={16} />
-              Save View
-            </button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              <Users size={16} className="mr-2" />
+              Todos los equipos
+            </Button>
+            <Button variant="outline" size="sm">
+              <Users size={16} className="mr-2" />
+              Rol: Administrador
+            </Button>
+            <Button variant="outline" size="sm">
+              <Save size={16} className="mr-2" />
+              Guardar Vista
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="metrics-grid">
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-label">Agents Online</span>
-          </div>
-          <div className="metric-value">{metrics.agentsOnline}</div>
-          <div className="metric-change positive">+3 vs yesterday</div>
-        </div>
+      {loading ? (
+        <div className="text-center py-16 text-gray-500">Cargando panel de control...</div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Agentes en Línea</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900">{metrics.agentsOnline}</div>
+                <p className="text-sm text-green-600 mt-1">+3 vs ayer</p>
+              </CardContent>
+            </Card>
 
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-label">Unassigned Tickets</span>
-          </div>
-          <div className="metric-value">{metrics.unassignedTickets}</div>
-          <div className="metric-change">Need assignment</div>
-        </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Tickets Sin Asignar</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900">{metrics.unassignedTickets}</div>
+                <p className="text-sm text-gray-600 mt-1">Necesitan asignación</p>
+              </CardContent>
+            </Card>
 
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-label">Queues Breaching Soon</span>
-          </div>
-          <div className="metric-value">{metrics.queuesBreachingSoon}</div>
-          <div className="metric-change warning">Within 1h</div>
-        </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Colas Próximas a Incumplir</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900">{metrics.queuesBreachingSoon}</div>
+                <p className="text-sm text-yellow-600 mt-1">Dentro de 1h</p>
+              </CardContent>
+            </Card>
 
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-label">Avg Load per Agent</span>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Carga Promedio por Agente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900">{metrics.avgLoadPerAgent}</div>
+                <p className="text-sm text-gray-600 mt-1">Objetivo ≤ 10</p>
+              </CardContent>
+            </Card>
           </div>
-          <div className="metric-value">{metrics.avgLoadPerAgent}</div>
-          <div className="metric-change">Target ≤ 10</div>
-        </div>
-      </div>
 
-      <div className="charts-grid">
-        <div className="chart-card">
-          <h3>Assignment Activity</h3>
-          <div className="chart-legend">
-            <div className="legend-item">
-              <span className="legend-dot blue"></span>
-              <span>Assigned</span>
-            </div>
-            <div className="legend-item">
-              <span className="legend-dot yellow"></span>
-              <span>Reassigned</span>
-            </div>
-          </div>
-          <div className="chart-placeholder">Bar/area chart placeholder</div>
-        </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Actividad de Asignación</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-6 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                    <span>Asignados</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                    <span>Reasignados</span>
+                  </div>
+                </div>
+                <div className="h-48 bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 text-sm">
+                  Gráfico de barras/área
+                </div>
+              </CardContent>
+            </Card>
 
-        <div className="chart-card">
-          <h3>Team Capacity</h3>
-          <div className="chart-legend">
-            <div className="legend-item">
-              <span className="legend-dot green"></span>
-              <span>Available</span>
-            </div>
-            <div className="legend-item">
-              <span className="legend-dot orange"></span>
-              <span>At Risk</span>
-            </div>
-          </div>
-          <div className="chart-placeholder">Donut chart placeholder</div>
-        </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Capacidad del Equipo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-6 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-2 h-2 rounded-full bg-green-600"></div>
+                    <span>Disponibles</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                    <span>En Riesgo</span>
+                  </div>
+                </div>
+                <div className="h-48 bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 text-sm">
+                  Gráfico de dona
+                </div>
+              </CardContent>
+            </Card>
 
-        <div className="chart-card">
-          <h3>Priority Mix (Unassigned)</h3>
-          <div className="chart-legend">
-            <div className="legend-item">
-              <span className="legend-dot red"></span>
-              <span>Urgent</span>
-            </div>
-            <div className="legend-item">
-              <span className="legend-dot blue"></span>
-              <span>High</span>
-            </div>
-            <div className="legend-item">
-              <span>Others</span>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Mezcla de Prioridades (Sin Asignar)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-6 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-2 h-2 rounded-full bg-red-600"></div>
+                    <span>Urgente</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                    <span>Alta</span>
+                  </div>
+                  <span className="text-sm text-gray-400">Otros</span>
+                </div>
+                <div className="h-48 bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 text-sm">
+                  Gráfico de barras apiladas
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <div className="chart-placeholder">Stacked bar placeholder</div>
-        </div>
-      </div>
 
-      <div className="tables-grid">
-        <div className="table-card">
-          <div className="table-header">
-            <h3>Unassigned Tickets</h3>
-            <button className="table-filter">
-              <Filter size={16} />
-              Priority: All
-            </button>
-          </div>
-          <div className="table-placeholder">Table content placeholder</div>
-        </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Tickets Sin Asignar</CardTitle>
+                <Button variant="outline" size="sm">
+                  <Filter size={16} className="mr-2" />
+                  Prioridad: Todas
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="h-48 bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 text-sm">
+                  Contenido de tabla
+                </div>
+              </CardContent>
+            </Card>
 
-        <div className="table-card">
-          <div className="table-header">
-            <h3>Agents & Load</h3>
-            <button className="table-filter">
-              <Users size={16} />
-              Team: All
-            </button>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Agentes y Carga</CardTitle>
+                <Button variant="outline" size="sm">
+                  <Users size={16} className="mr-2" />
+                  Equipo: Todos
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Agente</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Abiertos</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Alta/Urgente</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Tiempo Promedio Primera Respuesta</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {agents.map((agent, idx) => (
+                        <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="px-3 py-2 text-sm text-gray-900">{agent.name}</td>
+                          <td className="px-3 py-2 text-sm text-gray-700">{agent.open}</td>
+                          <td className="px-3 py-2 text-sm text-gray-700">{agent.highUrgent}</td>
+                          <td className="px-3 py-2 text-sm text-gray-700">{agent.avgTime}</td>
+                          <td className="px-3 py-2">
+                            <Badge 
+                              variant={
+                                agent.status === 'Online' ? 'default' :
+                                agent.status === 'Away' ? 'secondary' :
+                                'destructive'
+                              }
+                              className={
+                                agent.status === 'At Capacity' ? 'bg-red-100 text-red-800' : ''
+                              }
+                            >
+                              {agent.status === 'Online' ? 'En Línea' :
+                               agent.status === 'Away' ? 'Ausente' :
+                               agent.status === 'At Capacity' ? 'Al Límite' : agent.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <table className="agents-table">
-            <thead>
-              <tr>
-                <th>Agent</th>
-                <th>Open</th>
-                <th>High/Urgent</th>
-                <th>Avg Time to First Reply</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {agents.map((agent, idx) => (
-                <tr key={idx}>
-                  <td>{agent.name}</td>
-                  <td>{agent.open}</td>
-                  <td>{agent.highUrgent}</td>
-                  <td>{agent.avgTime}</td>
-                  <td>
-                    <span className={`status-badge ${agent.status.toLowerCase().replace(' ', '-')}`}>
-                      {agent.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };
 
 export default Dashboard;
-

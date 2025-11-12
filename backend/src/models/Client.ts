@@ -1,70 +1,141 @@
-import { v4 as uuidv4 } from 'uuid';
+import { eq, and } from 'drizzle-orm';
+import { db } from '../db';
+import { clients } from '../db/schema';
 import { Client as IClient } from '../types';
 
 export class ClientModel {
-  private static clients: IClient[] = [];
+  static async create(data: Omit<IClient, 'id' | 'createdAt' | 'updatedAt'>): Promise<IClient> {
+    const [client] = await db.insert(clients).values({
+      userId: data.userId,
+      company: data.company,
+      phone: data.phone,
+      address: data.address,
+      segment: data.segment,
+      status: data.status || 'Active',
+    }).returning();
 
-  static create(data: Omit<IClient, 'id' | 'createdAt' | 'updatedAt'>): IClient {
-    const client: IClient = {
-      id: uuidv4(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    return {
+      id: client.id,
+      userId: client.userId,
+      company: client.company,
+      phone: client.phone || undefined,
+      address: client.address || undefined,
+      segment: client.segment || undefined,
+      status: client.status,
+      createdAt: client.createdAt,
+      updatedAt: client.updatedAt,
     };
-
-    this.clients.push(client);
-    return client;
   }
 
-  static findById(id: string): IClient | null {
-    return this.clients.find(c => c.id === id) || null;
+  static async findById(id: string): Promise<IClient | null> {
+    const [client] = await db.select().from(clients).where(eq(clients.id, id)).limit(1);
+    
+    if (!client) return null;
+
+    return {
+      id: client.id,
+      userId: client.userId,
+      company: client.company,
+      phone: client.phone || undefined,
+      address: client.address || undefined,
+      segment: client.segment || undefined,
+      status: client.status,
+      createdAt: client.createdAt,
+      updatedAt: client.updatedAt,
+    };
   }
 
-  static findByUserId(userId: string): IClient | null {
-    return this.clients.find(c => c.userId === userId) || null;
+  static async findByUserId(userId: string): Promise<IClient | null> {
+    const [client] = await db.select().from(clients).where(eq(clients.userId, userId)).limit(1);
+    
+    if (!client) return null;
+
+    return {
+      id: client.id,
+      userId: client.userId,
+      company: client.company,
+      phone: client.phone || undefined,
+      address: client.address || undefined,
+      segment: client.segment || undefined,
+      status: client.status,
+      createdAt: client.createdAt,
+      updatedAt: client.updatedAt,
+    };
   }
 
-  static findAll(filters?: {
+  static async findAll(filters?: {
     status?: string;
     segment?: string;
-  }): IClient[] {
-    let result = [...this.clients];
+  }): Promise<IClient[]> {
+    let query = db.select().from(clients);
 
     if (filters) {
+      const conditions = [];
       if (filters.status) {
-        result = result.filter(c => c.status === filters.status);
+        conditions.push(eq(clients.status, filters.status));
       }
       if (filters.segment) {
-        result = result.filter(c => c.segment === filters.segment);
+        conditions.push(eq(clients.segment, filters.segment));
+      }
+      if (conditions.length > 0) {
+        query = db.select().from(clients).where(and(...conditions));
       }
     }
 
-    return result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const allClients = await query;
+    return allClients.map(client => ({
+      id: client.id,
+      userId: client.userId,
+      company: client.company,
+      phone: client.phone || undefined,
+      address: client.address || undefined,
+      segment: client.segment || undefined,
+      status: client.status,
+      createdAt: client.createdAt,
+      updatedAt: client.updatedAt,
+    })).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  static update(id: string, data: Partial<Omit<IClient, 'id' | 'createdAt'>>): IClient | null {
-    const index = this.clients.findIndex(c => c.id === id);
-    if (index === -1) return null;
-
-    this.clients[index] = {
-      ...this.clients[index],
-      ...data,
-      updatedAt: new Date()
-    };
-
-    return this.clients[index];
-  }
-
-  static delete(id: string): boolean {
-    const index = this.clients.findIndex(c => c.id === id);
-    if (index === -1) return false;
+  static async update(id: string, data: Partial<Omit<IClient, 'id' | 'createdAt'>>): Promise<IClient | null> {
+    const updateData = { ...data, updatedAt: new Date() };
     
-    this.clients.splice(index, 1);
-    return true;
+    const [updated] = await db.update(clients)
+      .set(updateData)
+      .where(eq(clients.id, id))
+      .returning();
+
+    if (!updated) return null;
+
+    return {
+      id: updated.id,
+      userId: updated.userId,
+      company: updated.company,
+      phone: updated.phone || undefined,
+      address: updated.address || undefined,
+      segment: updated.segment || undefined,
+      status: updated.status,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+    };
   }
 
-  static getClients(): IClient[] {
-    return this.clients;
+  static async delete(id: string): Promise<boolean> {
+    const result = await db.delete(clients).where(eq(clients.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  static async getClients(): Promise<IClient[]> {
+    const results = await db.select().from(clients);
+    return results.map(client => ({
+      id: client.id,
+      userId: client.userId,
+      company: client.company,
+      phone: client.phone || undefined,
+      address: client.address || undefined,
+      segment: client.segment || undefined,
+      status: client.status,
+      createdAt: client.createdAt,
+      updatedAt: client.updatedAt,
+    }));
   }
 }
-

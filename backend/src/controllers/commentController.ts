@@ -8,16 +8,16 @@ export const createComment = async (req: AuthRequest, res: Response): Promise<vo
     const userId = req.user?.userId;
 
     if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).json({ error: 'No autorizado' });
       return;
     }
 
     if (!ticketId || !content) {
-      res.status(400).json({ error: 'ticketId and content are required' });
+      res.status(400).json({ error: 'Se requieren ID de ticket y contenido' });
       return;
     }
 
-    const comment = CommentModel.create({
+    const comment = await CommentModel.create({
       ticketId,
       userId,
       content,
@@ -27,17 +27,17 @@ export const createComment = async (req: AuthRequest, res: Response): Promise<vo
 
     res.status(201).json(comment);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
 export const getComments = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { ticketId } = req.params;
-    const comments = CommentModel.findByTicketId(ticketId);
+    const comments = await CommentModel.findByTicketId(ticketId);
     res.json(comments);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -46,31 +46,31 @@ export const updateComment = async (req: AuthRequest, res: Response): Promise<vo
     const { id } = req.params;
     const { content } = req.body;
 
-    const comment = CommentModel.update(id, { content });
+    const comment = await CommentModel.update(id, { content });
     if (!comment) {
-      res.status(404).json({ error: 'Comment not found' });
+      res.status(404).json({ error: 'Comentario no encontrado' });
       return;
     }
 
     res.json(comment);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
 export const deleteComment = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const deleted = CommentModel.delete(id);
+    const deleted = await CommentModel.delete(id);
 
     if (!deleted) {
-      res.status(404).json({ error: 'Comment not found' });
+      res.status(404).json({ error: 'Comentario no encontrado' });
       return;
     }
 
-    res.json({ message: 'Comment deleted successfully' });
+    res.json({ message: 'Comentario eliminado exitosamente' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 

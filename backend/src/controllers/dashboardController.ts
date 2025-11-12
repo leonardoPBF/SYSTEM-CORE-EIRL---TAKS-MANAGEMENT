@@ -6,8 +6,8 @@ import { AgentStatus, TicketStatus } from '../types';
 
 export const getDashboardMetrics = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const tickets = TicketModel.getTickets();
-    const agents = AgentModel.getAgents();
+    const tickets = await TicketModel.getTickets();
+    const agents = await AgentModel.getAgents();
 
     const agentsOnline = agents.filter(a => a.status === AgentStatus.ONLINE).length;
     const unassignedTickets = tickets.filter(
@@ -41,7 +41,7 @@ export const getDashboardMetrics = async (_req: AuthRequest, res: Response): Pro
       backlog
     });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 

@@ -7,11 +7,11 @@ export const createClient = async (req: AuthRequest, res: Response): Promise<voi
     const { userId, company, phone, address, segment, status } = req.body;
 
     if (!userId || !company) {
-      res.status(400).json({ error: 'userId and company are required' });
+      res.status(400).json({ error: 'Se requieren ID de usuario y empresa' });
       return;
     }
 
-    const client = ClientModel.create({
+    const client = await ClientModel.create({
       userId,
       company,
       phone,
@@ -22,7 +22,7 @@ export const createClient = async (req: AuthRequest, res: Response): Promise<voi
 
     res.status(201).json(client);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -30,30 +30,30 @@ export const getClients = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const { status, segment } = req.query;
 
-    const clients = ClientModel.findAll({
+    const clients = await ClientModel.findAll({
       status: status as string,
       segment: segment as string
     });
 
     res.json(clients);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
 export const getClientById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const client = ClientModel.findById(id);
+    const client = await ClientModel.findById(id);
 
     if (!client) {
-      res.status(404).json({ error: 'Client not found' });
+      res.status(404).json({ error: 'Cliente no encontrado' });
       return;
     }
 
     res.json(client);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -62,31 +62,31 @@ export const updateClient = async (req: AuthRequest, res: Response): Promise<voi
     const { id } = req.params;
     const updateData = req.body;
 
-    const client = ClientModel.update(id, updateData);
+    const client = await ClientModel.update(id, updateData);
     if (!client) {
-      res.status(404).json({ error: 'Client not found' });
+      res.status(404).json({ error: 'Cliente no encontrado' });
       return;
     }
 
     res.json(client);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
 export const deleteClient = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const deleted = ClientModel.delete(id);
+    const deleted = await ClientModel.delete(id);
 
     if (!deleted) {
-      res.status(404).json({ error: 'Client not found' });
+      res.status(404).json({ error: 'Cliente no encontrado' });
       return;
     }
 
-    res.json({ message: 'Client deleted successfully' });
+    res.json({ message: 'Cliente eliminado exitosamente' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 

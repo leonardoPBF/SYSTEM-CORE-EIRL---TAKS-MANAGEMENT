@@ -1,54 +1,102 @@
-import { v4 as uuidv4 } from 'uuid';
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { comments } from '../db/schema';
 import { Comment as IComment } from '../types';
 
 export class CommentModel {
-  private static comments: IComment[] = [];
+  static async create(data: Omit<IComment, 'id' | 'createdAt' | 'updatedAt'>): Promise<IComment> {
+    const [comment] = await db.insert(comments).values({
+      ticketId: data.ticketId,
+      userId: data.userId,
+      content: data.content,
+      isInternal: data.isInternal || false,
+      attachments: data.attachments,
+    }).returning();
 
-  static create(data: Omit<IComment, 'id' | 'createdAt' | 'updatedAt'>): IComment {
-    const comment: IComment = {
-      id: uuidv4(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    return {
+      id: comment.id,
+      ticketId: comment.ticketId,
+      userId: comment.userId,
+      content: comment.content,
+      isInternal: comment.isInternal,
+      attachments: comment.attachments || undefined,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
     };
-
-    this.comments.push(comment);
-    return comment;
   }
 
-  static findById(id: string): IComment | null {
-    return this.comments.find(c => c.id === id) || null;
-  }
-
-  static findByTicketId(ticketId: string): IComment[] {
-    return this.comments
-      .filter(c => c.ticketId === ticketId)
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-  }
-
-  static update(id: string, data: Partial<Omit<IComment, 'id' | 'createdAt'>>): IComment | null {
-    const index = this.comments.findIndex(c => c.id === id);
-    if (index === -1) return null;
-
-    this.comments[index] = {
-      ...this.comments[index],
-      ...data,
-      updatedAt: new Date()
-    };
-
-    return this.comments[index];
-  }
-
-  static delete(id: string): boolean {
-    const index = this.comments.findIndex(c => c.id === id);
-    if (index === -1) return false;
+  static async findById(id: string): Promise<IComment | null> {
+    const [comment] = await db.select().from(comments).where(eq(comments.id, id)).limit(1);
     
-    this.comments.splice(index, 1);
-    return true;
+    if (!comment) return null;
+
+    return {
+      id: comment.id,
+      ticketId: comment.ticketId,
+      userId: comment.userId,
+      content: comment.content,
+      isInternal: comment.isInternal,
+      attachments: comment.attachments || undefined,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+    };
   }
 
-  static getComments(): IComment[] {
-    return this.comments;
+  static async findByTicketId(ticketId: string): Promise<IComment[]> {
+    const ticketComments = await db.select()
+      .from(comments)
+      .where(eq(comments.ticketId, ticketId));
+    
+    return ticketComments.map(comment => ({
+      id: comment.id,
+      ticketId: comment.ticketId,
+      userId: comment.userId,
+      content: comment.content,
+      isInternal: comment.isInternal,
+      attachments: comment.attachments || undefined,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+    })).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+
+  static async update(id: string, data: Partial<Omit<IComment, 'id' | 'createdAt'>>): Promise<IComment | null> {
+    const updateData = { ...data, updatedAt: new Date() };
+    
+    const [updated] = await db.update(comments)
+      .set(updateData)
+      .where(eq(comments.id, id))
+      .returning();
+
+    if (!updated) return null;
+
+    return {
+      id: updated.id,
+      ticketId: updated.ticketId,
+      userId: updated.userId,
+      content: updated.content,
+      isInternal: updated.isInternal,
+      attachments: updated.attachments || undefined,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+    };
+  }
+
+  static async delete(id: string): Promise<boolean> {
+    const result = await db.delete(comments).where(eq(comments.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  static async getComments(): Promise<IComment[]> {
+    const results = await db.select().from(comments);
+    return results.map(comment => ({
+      id: comment.id,
+      ticketId: comment.ticketId,
+      userId: comment.userId,
+      content: comment.content,
+      isInternal: comment.isInternal,
+      attachments: comment.attachments || undefined,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+    }));
   }
 }
-

@@ -1,14 +1,13 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import './Layout.css';
 
 const Layout = () => {
   return (
-    <div className="layout">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <Header />
-      <main className="main-content">
+      <main className="ml-64 mt-16 p-8 min-h-[calc(100vh-4rem)]">
         <Outlet />
       </main>
     </div>
@@ -16,4 +15,3 @@ const Layout = () => {
 };
 
 export default Layout;
-
