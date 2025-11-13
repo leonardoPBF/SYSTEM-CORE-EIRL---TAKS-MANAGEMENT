@@ -31,8 +31,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedUser = localStorage.getItem('user');
     
     if (storedToken && storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      
+      // Verificar si el rol está en formato antiguo (mayúsculas)
+      // Si es así, limpiar el token y forzar re-login
+      const rolesAntiguos = ['Admin', 'IT_Director', 'IT_Team', 'Client'];
+      if (rolesAntiguos.includes(parsedUser.role)) {
+        console.log('⚠️ Token antiguo detectado. Se requiere iniciar sesión nuevamente.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setToken(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      setUser(parsedUser);
       // Verify token by getting profile
       authAPI.getProfile()
         .then((profile) => {
@@ -73,6 +88,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    // Forzar recarga completa para limpiar cualquier estado residual
+    window.location.href = '/';
   };
 
   return (

@@ -1,8 +1,8 @@
 export enum UserRole {
-  ADMIN = 'Admin',
-  IT_DIRECTOR = 'IT_Director',
-  IT_TEAM = 'IT_Team',
-  CLIENT = 'Client'
+  ADMIN = 'admin',
+  IT_DIRECTOR = 'it_director',
+  IT_TEAM = 'it_team',
+  CLIENT = 'client'
 }
 
 export enum TicketStatus {

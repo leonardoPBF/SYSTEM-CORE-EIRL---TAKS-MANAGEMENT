@@ -173,6 +173,34 @@ export const agentsAPI = {
   getById: async (id: string) => {
     return apiRequest<any>(`/agents/${id}`);
   },
+
+  create: async (data: {
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+    team?: string;
+    status?: string;
+    maxTickets?: number;
+  }) => {
+    return apiRequest<any>('/agents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  update: async (id: string, data: any) => {
+    return apiRequest<any>(`/agents/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  delete: async (id: string) => {
+    return apiRequest<void>(`/agents/${id}`, {
+      method: 'DELETE',
+    });
+  },
 };
 
 // Dashboard API

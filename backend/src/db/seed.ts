@@ -55,7 +55,62 @@ export async function seedDatabase() {
       isActive: true,
     }).returning();
 
-    console.log('✅ Usuarios agentes creados');
+    // Nuevos agentes adicionales
+    const agent4Password = await bcrypt.hash('agent123', 10);
+    const [agent4User] = await db.insert(users).values({
+      email: 'carlos@tasksystemcore.com',
+      password: agent4Password,
+      name: 'Carlos Rodríguez',
+      role: 'it_team',
+      isActive: true,
+    }).returning();
+
+    const agent5Password = await bcrypt.hash('agent123', 10);
+    const [agent5User] = await db.insert(users).values({
+      email: 'maria@tasksystemcore.com',
+      password: agent5Password,
+      name: 'María García',
+      role: 'it_team',
+      isActive: true,
+    }).returning();
+
+    const agent6Password = await bcrypt.hash('agent123', 10);
+    const [agent6User] = await db.insert(users).values({
+      email: 'juan@tasksystemcore.com',
+      password: agent6Password,
+      name: 'Juan Martínez',
+      role: 'it_team',
+      isActive: true,
+    }).returning();
+
+    const agent7Password = await bcrypt.hash('agent123', 10);
+    const [agent7User] = await db.insert(users).values({
+      email: 'ana@tasksystemcore.com',
+      password: agent7Password,
+      name: 'Ana López',
+      role: 'it_team',
+      isActive: true,
+    }).returning();
+
+    const agent8Password = await bcrypt.hash('agent123', 10);
+    const [agent8User] = await db.insert(users).values({
+      email: 'pedro@tasksystemcore.com',
+      password: agent8Password,
+      name: 'Pedro Sánchez',
+      role: 'it_team',
+      isActive: true,
+    }).returning();
+
+    const agent9Password = await bcrypt.hash('agent123', 10);
+    const [agent9User] = await db.insert(users).values({
+      email: 'laura@tasksystemcore.com',
+      password: agent9Password,
+      name: 'Laura Fernández',
+      role: 'it_team',
+      isActive: true,
+    }).returning();
+
+    console.log('✅ Usuarios agentes creados (9 agentes)');
 
     // Crear Usuarios Clientes
     const client1Password = await bcrypt.hash('client123', 10);
@@ -131,15 +186,64 @@ export async function seedDatabase() {
       maxTickets: 12,
     }).returning();
 
-    await db.insert(agents).values({
+    const [agentRecord3] = await db.insert(agents).values({
       userId: agent3User.id,
       role: 'it_team',
       team: 'Equipo de Soporte 2',
       status: 'at_capacity',
       maxTickets: 10,
-    });
+    }).returning();
 
-    console.log('✅ Agentes creados');
+    // Nuevos agentes adicionales
+    const [agentRecord4] = await db.insert(agents).values({
+      userId: agent4User.id,
+      role: 'it_team',
+      team: 'Equipo de Soporte 1',
+      status: 'online',
+      maxTickets: 12,
+    }).returning();
+
+    const [agentRecord5] = await db.insert(agents).values({
+      userId: agent5User.id,
+      role: 'it_team',
+      team: 'Equipo de Soporte 2',
+      status: 'online',
+      maxTickets: 14,
+    }).returning();
+
+    const [agentRecord6] = await db.insert(agents).values({
+      userId: agent6User.id,
+      role: 'it_team',
+      team: 'Equipo de Soporte 2',
+      status: 'away',
+      maxTickets: 10,
+    }).returning();
+
+    const [agentRecord7] = await db.insert(agents).values({
+      userId: agent7User.id,
+      role: 'it_team',
+      team: 'Equipo de Soporte 3',
+      status: 'online',
+      maxTickets: 13,
+    }).returning();
+
+    const [agentRecord8] = await db.insert(agents).values({
+      userId: agent8User.id,
+      role: 'it_team',
+      team: 'Equipo de Soporte 3',
+      status: 'offline',
+      maxTickets: 11,
+    }).returning();
+
+    const [agentRecord9] = await db.insert(agents).values({
+      userId: agent9User.id,
+      role: 'it_team',
+      team: 'Equipo de Soporte 3',
+      status: 'online',
+      maxTickets: 15,
+    }).returning();
+
+    console.log('✅ Agentes creados (9 agentes en total)');
 
     // Crear Tickets
     const [ticket1] = await db.insert(tickets).values({
@@ -209,7 +313,162 @@ export async function seedDatabase() {
       tags: ['función', 'ui'],
     }).returning();
 
-    console.log('✅ Tickets creados');
+    // Tickets adicionales para nuevos agentes
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-006`,
+      subject: 'Error al exportar reportes',
+      description: 'El botón de exportar reportes no funciona correctamente.',
+      clientId: clientRecord2.id,
+      createdBy: client2User.id,
+      assignedTo: agentRecord3.id,
+      priority: 'high',
+      status: 'assigned',
+      type: 'Técnico',
+      source: 'email',
+      tags: ['reportes', 'bug'],
+    });
+
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-007`,
+      subject: 'Problema de rendimiento en dashboard',
+      description: 'El dashboard tarda mucho en cargar los datos.',
+      clientId: clientRecord3.id,
+      createdBy: client3User.id,
+      assignedTo: agentRecord3.id,
+      priority: 'urgent',
+      status: 'in_progress',
+      type: 'Performance',
+      source: 'chat',
+      tags: ['performance', 'dashboard'],
+    });
+
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-008`,
+      subject: 'Solicitud de cambio de plan',
+      description: 'Quiero cambiar mi plan actual a uno superior.',
+      clientId: clientRecord1.id,
+      createdBy: client1User.id,
+      assignedTo: agentRecord4.id,
+      priority: 'medium',
+      status: 'assigned',
+      type: 'Consulta',
+      source: 'portal',
+      tags: ['plan', 'upgrade'],
+    });
+
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-009`,
+      subject: 'No recibo notificaciones por email',
+      description: 'Las notificaciones por correo no están llegando.',
+      clientId: clientRecord2.id,
+      createdBy: client2User.id,
+      assignedTo: agentRecord4.id,
+      priority: 'high',
+      status: 'in_progress',
+      type: 'Técnico',
+      source: 'email',
+      tags: ['notificaciones', 'email'],
+    });
+
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-010`,
+      subject: 'Integración con API externa',
+      description: 'Necesito ayuda para integrar mi sistema con la API.',
+      clientId: clientRecord3.id,
+      createdBy: client3User.id,
+      assignedTo: agentRecord5.id,
+      priority: 'medium',
+      status: 'assigned',
+      type: 'Consulta',
+      source: 'portal',
+      tags: ['api', 'integración'],
+    });
+
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-011`,
+      subject: 'Error 500 en módulo de inventario',
+      description: 'Al acceder al módulo de inventario aparece error 500.',
+      clientId: clientRecord1.id,
+      createdBy: client1User.id,
+      assignedTo: agentRecord5.id,
+      priority: 'urgent',
+      status: 'in_progress',
+      type: 'Incidente',
+      source: 'chat',
+      tags: ['error', 'inventario', 'crítico'],
+    });
+
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-012`,
+      subject: 'Actualización de datos de contacto',
+      description: 'Necesito actualizar los datos de contacto de mi empresa.',
+      clientId: clientRecord2.id,
+      createdBy: client2User.id,
+      assignedTo: agentRecord6.id,
+      priority: 'low',
+      status: 'assigned',
+      type: 'General',
+      source: 'portal',
+      tags: ['datos', 'contacto'],
+    });
+
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-013`,
+      subject: 'Capacitación para nuevos usuarios',
+      description: 'Solicito una sesión de capacitación para mi equipo.',
+      clientId: clientRecord3.id,
+      createdBy: client3User.id,
+      assignedTo: agentRecord7.id,
+      priority: 'medium',
+      status: 'assigned',
+      type: 'Consulta',
+      source: 'email',
+      tags: ['capacitación', 'training'],
+    });
+
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-014`,
+      subject: 'Problema con permisos de usuario',
+      description: 'Un usuario no puede acceder a ciertas funcionalidades.',
+      clientId: clientRecord1.id,
+      createdBy: client1User.id,
+      assignedTo: agentRecord7.id,
+      priority: 'high',
+      status: 'in_progress',
+      type: 'Técnico',
+      source: 'chat',
+      tags: ['permisos', 'acceso'],
+    });
+
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-015`,
+      subject: 'Backup de datos históricos',
+      description: 'Necesito un backup de todos los datos del último año.',
+      clientId: clientRecord2.id,
+      createdBy: client2User.id,
+      assignedTo: agentRecord9.id,
+      priority: 'medium',
+      status: 'assigned',
+      type: 'Solicitud',
+      source: 'email',
+      tags: ['backup', 'datos'],
+    });
+
+    await db.insert(tickets).values({
+      ticketNumber: `TKT-${Date.now()}-016`,
+      subject: 'Mejora en interfaz de búsqueda',
+      description: 'La búsqueda podría ser más intuitiva y rápida.',
+      clientId: clientRecord3.id,
+      createdBy: client3User.id,
+      assignedTo: agentRecord9.id,
+      priority: 'low',
+      status: 'in_progress',
+      type: 'Solicitud de Función',
+      source: 'portal',
+      tags: ['ui', 'búsqueda', 'mejora'],
+    });
+
+    console.log('✅ Tickets creados (16 tickets en total)');
 
     // Crear Comentarios
     await db.insert(comments).values({
@@ -251,7 +510,16 @@ export async function seedDatabase() {
 
     console.log('✅ Base de datos sembrada exitosamente!');
     console.log('📧 Administrador: admin@tasksystemcore.com / admin123');
-    console.log('👤 Agente: leslie@tasksystemcore.com / agent123');
+    console.log('👤 Agentes TI (9 miembros):');
+    console.log('   - leslie@tasksystemcore.com / agent123');
+    console.log('   - devon@tasksystemcore.com / agent123');
+    console.log('   - jenny@tasksystemcore.com / agent123');
+    console.log('   - carlos@tasksystemcore.com / agent123');
+    console.log('   - maria@tasksystemcore.com / agent123');
+    console.log('   - juan@tasksystemcore.com / agent123');
+    console.log('   - ana@tasksystemcore.com / agent123');
+    console.log('   - pedro@tasksystemcore.com / agent123');
+    console.log('   - laura@tasksystemcore.com / agent123');
     console.log('👤 Cliente: jane@acme.com / client123');
   } catch (error) {
     console.error('❌ Error sembrando base de datos:', error);

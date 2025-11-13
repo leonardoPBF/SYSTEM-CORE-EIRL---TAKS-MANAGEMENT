@@ -11,14 +11,17 @@ import { UserRole } from '../types';
 
 const router = Router();
 
+// Todas las rutas requieren autenticación
 router.use(authenticate);
-router.use(authorize(UserRole.ADMIN, UserRole.IT_DIRECTOR));
 
+// Rutas de lectura: cualquier usuario autenticado puede ver agentes
 router.get('/', getAgents);
 router.get('/:id', getAgentById);
-router.post('/', createAgent);
-router.put('/:id', updateAgent);
-router.delete('/:id', deleteAgent);
+
+// Rutas de escritura: solo ADMIN e IT_DIRECTOR pueden crear/modificar/eliminar
+router.post('/', authorize(UserRole.ADMIN, UserRole.IT_DIRECTOR), createAgent);
+router.put('/:id', authorize(UserRole.ADMIN, UserRole.IT_DIRECTOR), updateAgent);
+router.delete('/:id', authorize(UserRole.ADMIN, UserRole.IT_DIRECTOR), deleteAgent);
 
 export default router;
 
