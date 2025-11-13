@@ -12,7 +12,13 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f postgres",
+    "docker:restart": "docker-compose restart postgres",
+    "docker:clean": "docker-compose down -v",
+    "docker:psql": "docker exec -it tasksystemcore-postgres psql -U tasksystemcore -d tasksystemcore"
   },
   "keywords": [
     "express",

@@ -9,7 +9,8 @@ import {
   Tag,
   ExternalLink
 } from 'lucide-react';
-import { ticketsAPI, clientsAPI } from '@/services/api';
+import { ticketsAPI, clientsAPI, agentsAPI } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,13 +27,26 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const Tickets = () => {
+  const { user } = useAuth();
   const [tickets, setTickets] = useState<any[]>([]);
+  const [filteredTickets, setFilteredTickets] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showNewTicketDialog, setShowNewTicketDialog] = useState(false);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [filters, setFilters] = useState({
+    status: '',
+    priority: '',
+    type: '',
+    source: '',
+  });
   const [clients, setClients] = useState<any[]>([]);
+  const [agents, setAgents] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     subject: '',
     description: '',
@@ -41,12 +55,20 @@ const Tickets = () => {
     type: 'General',
     source: 'portal',
   });
+  const [assignData, setAssignData] = useState({
+    agentId: '',
+  });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadTickets();
     loadClients();
+    loadAgents();
   }, []);
+
+  useEffect(() => {
+    filterTickets();
+  }, [searchQuery, tickets, filters]);
 
   const loadTickets = async () => {
     try {
@@ -58,6 +80,7 @@ const Tickets = () => {
       }
     } catch (error) {
       console.error('Error cargando tickets:', error);
+      toast.error('Error al cargar tickets');
     } finally {
       setLoading(false);
     }
@@ -72,11 +95,58 @@ const Tickets = () => {
     }
   };
 
+  const loadAgents = async () => {
+    try {
+      const data = await agentsAPI.getAll();
+      setAgents(data);
+    } catch (error) {
+      console.error('Error cargando agentes:', error);
+    }
+  };
+
+  const filterTickets = () => {
+    let filtered = [...tickets];
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(t => 
+        t.ticketNumber?.toLowerCase().includes(query) ||
+        t.subject?.toLowerCase().includes(query) ||
+        t.description?.toLowerCase().includes(query) ||
+        t.type?.toLowerCase().includes(query)
+      );
+    }
+    
+    if (filters.status) {
+      filtered = filtered.filter(t => t.status === filters.status);
+    }
+    
+    if (filters.priority) {
+      filtered = filtered.filter(t => t.priority === filters.priority);
+    }
+    
+    if (filters.type) {
+      filtered = filtered.filter(t => t.type === filters.type);
+    }
+    
+    if (filters.source) {
+      filtered = filtered.filter(t => t.source === filters.source);
+    }
+    
+    setFilteredTickets(filtered);
+  };
+
+  const clearFilters = () => {
+    setFilters({ status: '', priority: '', type: '', source: '' });
+  };
+
+  const activeFiltersCount = Object.values(filters).filter(f => f !== '').length;
+
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.subject || !formData.description || !formData.clientId) {
-      alert('Por favor complete todos los campos requeridos');
+      toast.error('Por favor complete todos los campos requeridos');
       return;
     }
 
@@ -91,7 +161,7 @@ const Tickets = () => {
         source: formData.source,
       });
       
-      // Limpiar formulario
+      toast.success('Ticket creado exitosamente');
       setFormData({
         subject: '',
         description: '',
@@ -100,15 +170,55 @@ const Tickets = () => {
         type: 'General',
         source: 'portal',
       });
-      
-      // Cerrar diálogo y recargar tickets
       setShowNewTicketDialog(false);
       await loadTickets();
-      
-      alert('Ticket creado exitosamente');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creando ticket:', error);
-      alert('Error al crear el ticket. Por favor intente nuevamente.');
+      toast.error(error?.message || 'Error al crear el ticket');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReviewTicket = async () => {
+    if (!selectedTicket) {
+      toast.error('Por favor seleccione un ticket');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const updated = await ticketsAPI.review(selectedTicket.id);
+      setSelectedTicket(updated);
+      await loadTickets();
+      toast.success('Ticket marcado para revisión por Director TI');
+    } catch (error: any) {
+      console.error('Error revisando ticket:', error);
+      toast.error(error?.message || 'Error al revisar el ticket');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAssignTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedTicket || !assignData.agentId) {
+      toast.error('Por favor seleccione un agente');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const updated = await ticketsAPI.assign(selectedTicket.id, assignData.agentId);
+      setSelectedTicket(updated);
+      setAssignData({ agentId: '' });
+      setShowAssignDialog(false);
+      await loadTickets();
+      toast.success('Ticket asignado exitosamente');
+    } catch (error: any) {
+      console.error('Error asignando ticket:', error);
+      toast.error(error?.message || 'Error al asignar el ticket');
     } finally {
       setSubmitting(false);
     }
@@ -128,13 +238,34 @@ const Tickets = () => {
     const labels: Record<string, string> = {
       'Open': 'Abierto',
       'Pending_Director': 'Pendiente Director TI',
-      'Assigned': 'Asignado a Equipo TI',
+      'Assigned': 'Asignado',
       'In Progress': 'En Progreso',
       'Resolved': 'Resuelto',
       'Closed': 'Cerrado'
     };
     return labels[status] || status;
   };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Open':
+        return 'bg-blue-100 text-blue-800';
+      case 'Pending_Director':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Assigned':
+      case 'In Progress':
+        return 'bg-green-100 text-green-800';
+      case 'Resolved':
+        return 'bg-gray-100 text-gray-800';
+      case 'Closed':
+        return 'bg-gray-200 text-gray-900';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const canReview = user?.role === 'IT_DIRECTOR' || user?.role === 'ADMIN';
+  const canAssign = user?.role === 'IT_DIRECTOR' || user?.role === 'ADMIN';
 
   return (
     <div className="w-full px-6">
@@ -144,8 +275,8 @@ const Tickets = () => {
             <Ticket className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestión de Tickets</h1>
-            <p className="text-sm text-gray-500 mt-1">Administra y resuelve tickets de soporte</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestión de Tickets</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Administra y resuelve tickets de soporte</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -167,17 +298,23 @@ const Tickets = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3 mb-4">
-              <div className="relative flex-1 flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
+              <div className="relative flex-1 flex items-center gap-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2">
                 <Search size={18} className="text-gray-400" />
                 <Input
                   type="text"
                   placeholder="Buscar tickets..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="border-0 bg-transparent focus-visible:ring-0"
                 />
               </div>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowFilterDialog(true)}
+              >
                 <Filter size={16} className="mr-2" />
-                Filtros
+                Filtros {activeFiltersCount > 0 && `(${activeFiltersCount})`}
               </Button>
             </div>
           </CardHeader>
@@ -189,20 +326,20 @@ const Tickets = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {tickets.length > 0 ? (
-                  tickets.map((ticket) => (
+                {filteredTickets.length > 0 ? (
+                  filteredTickets.map((ticket) => (
                     <div
                       key={ticket.id}
                       className={cn(
                         "p-4 border rounded-lg cursor-pointer transition-colors",
                         selectedTicket?.id === ticket.id
-                          ? "bg-blue-50 border-blue-500"
-                          : "border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                          ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500"
+                          : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300"
                       )}
                       onClick={() => setSelectedTicket(ticket)}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-semibold text-gray-900">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                           {ticket.ticketNumber} {ticket.subject}
                         </h3>
                         <Badge
@@ -216,16 +353,17 @@ const Tickets = () => {
                           {getPriorityLabel(ticket.priority)}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+                      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-2">
                         <span>{ticket.clientCompany || 'Cliente'}</span>
                         <span>•</span>
                         <span>{ticket.type}</span>
                       </div>
-                      <div className="text-xs">
-                        {ticket.assignedTo ? (
-                          <span className="text-green-600">{getStatusLabel(ticket.status)}</span>
-                        ) : (
-                          <span className="text-gray-400">Sin Asignar</span>
+                      <div className="flex items-center justify-between">
+                        <Badge className={cn("text-xs", getStatusColor(ticket.status))}>
+                          {getStatusLabel(ticket.status)}
+                        </Badge>
+                        {ticket.assignedTo && (
+                          <span className="text-xs text-gray-500">Asignado</span>
                         )}
                       </div>
                     </div>
@@ -249,93 +387,142 @@ const Tickets = () => {
                 <CardTitle className="text-xl">
                   {selectedTicket.ticketNumber} {selectedTicket.subject}
                 </CardTitle>
-                <Badge variant="secondary">Sin Asignar</Badge>
+                <Badge className={cn("text-xs", getStatusColor(selectedTicket.status))}>
+                  {getStatusLabel(selectedTicket.status)}
+                </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-sm font-medium text-gray-600">Cliente:</span>
-                  <span className="text-sm text-gray-900">{selectedTicket.clientCompany || 'N/A'}</span>
+                <div className="flex justify-between items-center py-2 border-b dark:border-gray-700">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Cliente:</span>
+                  <span className="text-sm text-gray-900 dark:text-gray-100">{selectedTicket.clientCompany || 'N/A'}</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-sm font-medium text-gray-600">Prioridad:</span>
-                  <Badge variant={selectedTicket.priority === 'High' ? 'default' : 'secondary'}>
+                <div className="flex justify-between items-center py-2 border-b dark:border-gray-700">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Prioridad:</span>
+                  <Badge variant={selectedTicket.priority === 'High' || selectedTicket.priority === 'Urgent' ? 'default' : 'secondary'}>
                     {getPriorityLabel(selectedTicket.priority)}
                   </Badge>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-sm font-medium text-gray-600">Tipo:</span>
-                  <span className="text-sm text-gray-900">{selectedTicket.type}</span>
+                <div className="flex justify-between items-center py-2 border-b dark:border-gray-700">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Tipo:</span>
+                  <span className="text-sm text-gray-900 dark:text-gray-100">{selectedTicket.type}</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-sm font-medium text-gray-600">Fuente:</span>
-                  <span className="text-sm text-gray-900">{selectedTicket.source}</span>
+                <div className="flex justify-between items-center py-2 border-b dark:border-gray-700">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Fuente:</span>
+                  <span className="text-sm text-gray-900 dark:text-gray-100">{selectedTicket.source}</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-sm font-medium text-gray-600">Creado:</span>
-                  <span className="text-sm text-gray-900">
+                <div className="flex justify-between items-center py-2 border-b dark:border-gray-700">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Creado:</span>
+                  <span className="text-sm text-gray-900 dark:text-gray-100">
                     {new Date(selectedTicket.createdAt).toLocaleString('es-ES')}
                   </span>
+                </div>
+                <div className="py-2">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Descripción:</p>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">{selectedTicket.description}</p>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-4">Flujo del Ticket</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Flujo del Ticket</h3>
                 <div className="space-y-3 mb-4">
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                    <User size={18} className="text-blue-600" />
+                  <div className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg",
+                    selectedTicket.status === 'Open' 
+                      ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800" 
+                      : "bg-gray-50 dark:bg-gray-800"
+                  )}>
+                    <User size={18} className={selectedTicket.status === 'Open' ? "text-blue-600" : "text-gray-400"} />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">1. Cliente crea ticket</p>
+                      <p className={cn(
+                        "text-sm font-medium",
+                        selectedTicket.status === 'Open' ? "text-gray-900 dark:text-gray-100" : "text-gray-500"
+                      )}>
+                        1. Cliente crea ticket
+                      </p>
                       <p className="text-xs text-gray-500">Estado: Abierto</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                    <Clock size={18} className="text-yellow-600" />
+                  <div className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg",
+                    selectedTicket.status === 'Pending_Director' 
+                      ? "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800" 
+                      : "bg-gray-50 dark:bg-gray-800"
+                  )}>
+                    <Clock size={18} className={selectedTicket.status === 'Pending_Director' ? "text-yellow-600" : "text-gray-400"} />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">2. Director TI revisa</p>
+                      <p className={cn(
+                        "text-sm font-medium",
+                        selectedTicket.status === 'Pending_Director' ? "text-gray-900 dark:text-gray-100" : "text-gray-500"
+                      )}>
+                        2. Director TI revisa
+                      </p>
                       <p className="text-xs text-gray-500">Estado: Pendiente Director TI</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                    <Tag size={18} className="text-green-600" />
+                  <div className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg",
+                    selectedTicket.status === 'Assigned' || selectedTicket.status === 'In Progress' 
+                      ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" 
+                      : "bg-gray-50 dark:bg-gray-800"
+                  )}>
+                    <Tag size={18} className={selectedTicket.status === 'Assigned' || selectedTicket.status === 'In Progress' ? "text-green-600" : "text-gray-400"} />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">3. Asignado a Equipo TI</p>
+                      <p className={cn(
+                        "text-sm font-medium",
+                        selectedTicket.status === 'Assigned' || selectedTicket.status === 'In Progress' ? "text-gray-900 dark:text-gray-100" : "text-gray-500"
+                      )}>
+                        3. Asignado a Equipo TI
+                      </p>
                       <p className="text-xs text-gray-500">Estado: Asignado/En Progreso</p>
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="outline">
-                    <User size={16} className="mr-2" />
-                    Revisar como Director
-                  </Button>
-                  <Button>
-                    <ExternalLink size={16} className="mr-2" />
-                    Asignar a Equipo TI
-                  </Button>
+                  {canReview && selectedTicket.status === 'Open' && (
+                    <Button 
+                      variant="outline"
+                      onClick={handleReviewTicket}
+                      disabled={submitting}
+                    >
+                      <User size={16} className="mr-2" />
+                      Revisar como Director
+                    </Button>
+                  )}
+                  {canAssign && (selectedTicket.status === 'Pending_Director' || selectedTicket.status === 'Open') && (
+                    <Button
+                      onClick={() => setShowAssignDialog(true)}
+                      disabled={submitting}
+                    >
+                      <ExternalLink size={16} className="mr-2" />
+                      Asignar a Equipo TI
+                    </Button>
+                  )}
                 </div>
               </div>
 
               <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-4">Tickets Similares</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Tickets Similares</h3>
                 <div className="space-y-3">
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-gray-900">#4821</span>
-                      <Badge className="bg-green-100 text-green-800">Resuelto</Badge>
-                    </div>
-                    <p className="font-medium text-gray-900 mb-1">Fallo de pago en plan anual</p>
-                    <span className="text-xs text-gray-600">Facturación • Fallo 3D Secure</span>
-                  </div>
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-gray-900">#4739</span>
-                      <span className="text-xs text-gray-400">Abierto</span>
-                    </div>
-                    <p className="font-medium text-gray-900 mb-1">Tarjeta rechazada por el banco</p>
-                    <span className="text-xs text-gray-600">Pagos • Validación necesaria</span>
-                  </div>
+                  {tickets
+                    .filter(t => t.id !== selectedTicket.id && (t.type === selectedTicket.type || t.priority === selectedTicket.priority))
+                    .slice(0, 2)
+                    .map((ticket) => (
+                      <div key={ticket.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" onClick={() => setSelectedTicket(ticket)}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-semibold text-gray-900 dark:text-gray-100">{ticket.ticketNumber}</span>
+                          <Badge className={cn("text-xs", getStatusColor(ticket.status))}>
+                            {getStatusLabel(ticket.status)}
+                          </Badge>
+                        </div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100 mb-1">{ticket.subject}</p>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">{ticket.type} • {getPriorityLabel(ticket.priority)}</span>
+                      </div>
+                    ))}
+                  {tickets.filter(t => t.id !== selectedTicket.id && (t.type === selectedTicket.type || t.priority === selectedTicket.priority)).length === 0 && (
+                    <p className="text-sm text-gray-500 text-center py-4">No hay tickets similares</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -345,7 +532,7 @@ const Tickets = () => {
 
       {/* Diálogo para Nuevo Ticket */}
       <Dialog open={showNewTicketDialog} onOpenChange={setShowNewTicketDialog}>
-        <DialogContent onClose={() => setShowNewTicketDialog(false)}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Crear Nuevo Ticket</DialogTitle>
             <DialogDescription>
@@ -460,6 +647,148 @@ const Tickets = () => {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo para Asignar Ticket */}
+      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Asignar Ticket a Equipo TI</DialogTitle>
+            <DialogDescription>
+              Seleccione el agente al que desea asignar este ticket
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleAssignTicket}>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="agentId">Agente *</Label>
+                <Select
+                  id="agentId"
+                  value={assignData.agentId}
+                  onChange={(e) => setAssignData({ agentId: e.target.value })}
+                  required
+                >
+                  <option value="">Seleccione un agente</option>
+                  {agents
+                    .filter(a => a.status === 'ONLINE' || a.status === 'AWAY')
+                    .map((agent) => (
+                      <option key={agent.id} value={agent.id}>
+                        {agent.name} - {agent.team || 'Sin equipo'} ({agent.openTickets}/{agent.maxTickets})
+                      </option>
+                    ))}
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Solo se muestran agentes disponibles
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowAssignDialog(false)}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={submitting}
+              >
+                {submitting ? 'Asignando...' : 'Asignar Ticket'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de Filtros */}
+      <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Filtrar Tickets</DialogTitle>
+            <DialogDescription>
+              Seleccione los filtros que desea aplicar
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="filter-status">Estado</Label>
+              <Select
+                id="filter-status"
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+              >
+                <option value="">Todos los estados</option>
+                <option value="open">Abierto</option>
+                <option value="pending_director">Pendiente Director TI</option>
+                <option value="assigned">Asignado</option>
+                <option value="in_progress">En Progreso</option>
+                <option value="resolved">Resuelto</option>
+                <option value="closed">Cerrado</option>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="filter-priority">Prioridad</Label>
+              <Select
+                id="filter-priority"
+                value={filters.priority}
+                onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+              >
+                <option value="">Todas las prioridades</option>
+                <option value="urgent">Urgente</option>
+                <option value="high">Alta</option>
+                <option value="medium">Media</option>
+                <option value="low">Baja</option>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="filter-type">Tipo</Label>
+              <Select
+                id="filter-type"
+                value={filters.type}
+                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+              >
+                <option value="">Todos los tipos</option>
+                <option value="Técnico">Técnico</option>
+                <option value="Facturación">Facturación</option>
+                <option value="Consulta">Consulta</option>
+                <option value="Solicitud">Solicitud</option>
+                <option value="General">General</option>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="filter-source">Origen</Label>
+              <Select
+                id="filter-source"
+                value={filters.source}
+                onChange={(e) => setFilters({ ...filters, source: e.target.value })}
+              >
+                <option value="">Todos los orígenes</option>
+                <option value="email">Email</option>
+                <option value="chat">Chat</option>
+                <option value="portal">Portal</option>
+                <option value="phone">Teléfono</option>
+                <option value="api">API</option>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={clearFilters}>
+              Limpiar Filtros
+            </Button>
+            <Button onClick={() => setShowFilterDialog(false)}>
+              Aplicar Filtros
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

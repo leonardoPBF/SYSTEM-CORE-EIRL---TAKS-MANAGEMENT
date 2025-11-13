@@ -10,6 +10,7 @@ import clientRoutes from './routes/clientRoutes';
 import agentRoutes from './routes/agentRoutes';
 import commentRoutes from './routes/commentRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
+import reportsRoutes from './routes/reportsRoutes';
 
 dotenv.config();
 
@@ -33,7 +34,8 @@ app.get('/', (_req: Request, res: Response) => {
       clients: '/api/clients',
       agents: '/api/agents',
       comments: '/api/comments',
-      dashboard: '/api/dashboard'
+      dashboard: '/api/dashboard',
+      reports: '/api/reports'
     }
   });
 });
@@ -52,16 +54,25 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Seed database on startup (only in development)
 if (process.env.NODE_ENV !== 'production') {
-  seedDatabase()
-    .then(() => {
-      console.log('✅ Base de datos inicializada');
-    })
-    .catch((error) => {
-      console.error('❌ Error inicializando base de datos:', error);
-    });
+  // Esperar un poco para asegurar que la conexión esté lista
+  setTimeout(() => {
+    seedDatabase()
+      .then(() => {
+        console.log('✅ Base de datos inicializada');
+      })
+      .catch((error) => {
+        console.error('❌ Error inicializando base de datos:', error);
+        console.error('💡 Asegúrate de que:');
+        console.error('   1. PostgreSQL esté corriendo');
+        console.error('   2. La base de datos exista');
+        console.error('   3. DBCONNECTION en .env sea correcta');
+        console.error('   4. Ejecuta: npm run db:push (para crear las tablas)');
+      });
+  }, 1000);
 }
 
 // Start server

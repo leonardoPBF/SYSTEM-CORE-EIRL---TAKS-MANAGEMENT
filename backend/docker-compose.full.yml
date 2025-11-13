@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tasksystemcore-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tasksystemcore
+      POSTGRES_PASSWORD: tasksystemcore123
+      POSTGRES_DB: tasksystemcore
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasksystemcore -d tasksystemcore"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tasksystemcore-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tasksystemcore-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      DBCONNECTION: postgresql://tasksystemcore:tasksystemcore123@postgres:5432/tasksystemcore
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tasksystemcore-network
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  tasksystemcore-network:
+    driver: bridge
+

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserCog, Users, Plus, Filter } from 'lucide-react';
+import { UserCog, Users, Plus, Filter, Search } from 'lucide-react';
 import { agentsAPI } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 interface Agent {
   id: string;
@@ -32,9 +33,11 @@ interface Agent {
 
 const Agents = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [filteredAgents, setFilteredAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [teamFilter, setTeamFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showNewAgentDialog, setShowNewAgentDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -50,6 +53,10 @@ const Agents = () => {
   useEffect(() => {
     loadAgents();
   }, [teamFilter, statusFilter]);
+
+  useEffect(() => {
+    filterAgents();
+  }, [searchQuery, agents, teamFilter, statusFilter]);
 
   const loadAgents = async () => {
     try {
@@ -67,6 +74,29 @@ const Agents = () => {
     }
   };
 
+  const filterAgents = () => {
+    let filtered = [...agents];
+    
+    if (teamFilter) {
+      filtered = filtered.filter(a => a.team === teamFilter);
+    }
+    
+    if (statusFilter) {
+      filtered = filtered.filter(a => a.status === statusFilter);
+    }
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(a => 
+        a.name?.toLowerCase().includes(query) ||
+        a.email?.toLowerCase().includes(query) ||
+        a.team?.toLowerCase().includes(query)
+      );
+    }
+    
+    setFilteredAgents(filtered);
+  };
+
   const getUniqueTeams = () => {
     const teams = agents.map(a => a.team).filter(Boolean);
     return [...new Set(teams)];
@@ -76,7 +106,7 @@ const Agents = () => {
     e.preventDefault();
     
     if (!formData.name || !formData.email || !formData.password) {
-      alert('Por favor complete todos los campos requeridos');
+      toast.error('Por favor complete todos los campos requeridos');
       return;
     }
 
@@ -92,7 +122,7 @@ const Agents = () => {
         maxTickets: formData.maxTickets,
       });
       
-      // Limpiar formulario
+      toast.success('Agente creado exitosamente');
       setFormData({
         name: '',
         email: '',
@@ -102,15 +132,11 @@ const Agents = () => {
         status: 'offline',
         maxTickets: 10,
       });
-      
-      // Cerrar diálogo y recargar agentes
       setShowNewAgentDialog(false);
       await loadAgents();
-      
-      alert('Agente creado exitosamente');
     } catch (error: any) {
       console.error('Error creando agente:', error);
-      alert(error?.message || 'Error al crear el agente. Por favor intente nuevamente.');
+      toast.error(error?.message || 'Error al crear el agente');
     } finally {
       setSubmitting(false);
     }
@@ -257,21 +283,46 @@ const Agents = () => {
       )}
 
       <Card className="hover:shadow-lg transition-all duration-300">
-        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 border-b">
-          <CardTitle className="text-base">
-            Equipo de TI - {agents.length} {agents.length === 1 ? 'Miembro' : 'Miembros'}
-          </CardTitle>
-          <div className="flex gap-2">
-            {getUniqueTeams().map(team => (
-              <Button 
-                key={team}
-                variant={teamFilter === team ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setTeamFilter(teamFilter === team ? '' : team || '')}
-              >
-                {team}
-              </Button>
-            ))}
+        <CardHeader className="flex flex-col gap-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">
+              Equipo de TI - {filteredAgents.length} {filteredAgents.length === 1 ? 'Miembro' : 'Miembros'}
+            </CardTitle>
+            <div className="flex gap-2">
+              {getUniqueTeams().map(team => (
+                <Button 
+                  key={team}
+                  variant={teamFilter === team ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setTeamFilter(teamFilter === team ? '' : team || '')}
+                >
+                  {team}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2">
+              <Search size={18} className="text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Buscar agentes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border-0 bg-transparent focus-visible:ring-0"
+              />
+            </div>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-40"
+            >
+              <option value="">Todos los estados</option>
+              <option value="ONLINE">En Línea</option>
+              <option value="AWAY">Ausente</option>
+              <option value="OFFLINE">Desconectado</option>
+              <option value="AT_CAPACITY">Al Límite</option>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="pt-6">
@@ -282,7 +333,7 @@ const Agents = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {agents.length > 0 ? agents.map((agent) => (
+              {filteredAgents.length > 0 ? filteredAgents.map((agent) => (
                 <Card key={agent.id} className="hover:shadow-lg transition-all duration-300 border-2 hover:border-green-500">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
@@ -352,7 +403,9 @@ const Agents = () => {
                   <UserCog className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500 font-medium">No hay agentes disponibles</p>
                   <p className="text-sm text-gray-400 mt-2">
-                    {teamFilter && 'No hay agentes en este equipo'}
+                    {(teamFilter || statusFilter || searchQuery) 
+                      ? 'No hay agentes que coincidan con los filtros' 
+                      : 'Agrega un nuevo agente para comenzar'}
                   </p>
                 </div>
               )}

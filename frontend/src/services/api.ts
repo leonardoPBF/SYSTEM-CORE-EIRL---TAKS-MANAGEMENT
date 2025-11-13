@@ -108,6 +108,12 @@ export const ticketsAPI = {
     });
   },
 
+  review: async (id: string) => {
+    return apiRequest<any>(`/tickets/${id}/review`, {
+      method: 'PUT',
+    });
+  },
+
   delete: async (id: string) => {
     return apiRequest<void>(`/tickets/${id}`, {
       method: 'DELETE',
@@ -208,6 +214,34 @@ export const dashboardAPI = {
   getMetrics: async () => {
     return apiRequest<any>('/dashboard/metrics');
   },
+  getAssignmentActivity: async () => {
+    return apiRequest<any[]>('/dashboard/assignment-activity');
+  },
+  getTeamCapacity: async () => {
+    return apiRequest<any>('/dashboard/team-capacity');
+  },
+  getUnassignedPriorities: async () => {
+    return apiRequest<any>('/dashboard/unassigned-priorities');
+  },
+  getUnassignedTickets: async () => {
+    return apiRequest<any[]>('/dashboard/unassigned-tickets');
+  },
+};
+
+// Reports API
+export const reportsAPI = {
+  getVolumeTrend: async () => {
+    return apiRequest<any[]>('/reports/volume-trend');
+  },
+  getSLABreaches: async () => {
+    return apiRequest<any[]>('/reports/sla-breaches');
+  },
+  getFirstResponseTime: async () => {
+    return apiRequest<any[]>('/reports/first-response-time');
+  },
+  getResolutionTime: async () => {
+    return apiRequest<any[]>('/reports/resolution-time');
+  },
 };
 
 // Comments API
@@ -223,6 +257,21 @@ export const commentsAPI = {
     attachments?: string[];
   }) => {
     return apiRequest<any>('/comments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// Users API (for creating users when creating clients)
+export const usersAPI = {
+  create: async (data: {
+    name: string;
+    email: string;
+    password: string;
+    role?: string;
+  }) => {
+    return apiRequest<any>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });

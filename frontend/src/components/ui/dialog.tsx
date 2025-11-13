@@ -37,7 +37,7 @@ const DialogContent = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative bg-white rounded-lg shadow-lg w-full max-w-lg p-6 animate-in fade-in-90 slide-in-from-bottom-10 duration-200",
+      "relative bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-lg p-6 animate-in fade-in-90 slide-in-from-bottom-10 duration-200 border border-gray-200 dark:border-gray-800",
       className
     )}
     {...props}
@@ -46,7 +46,7 @@ const DialogContent = React.forwardRef<
     {onClose && (
       <button
         onClick={onClose}
-        className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:pointer-events-none"
+        className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white dark:ring-offset-gray-900 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:ring-offset-2 disabled:pointer-events-none text-gray-500 dark:text-gray-400"
       >
         <X className="h-4 w-4" />
         <span className="sr-only">Cerrar</span>
@@ -110,7 +110,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-gray-500", className)}
+    className={cn("text-sm text-gray-500 dark:text-gray-400", className)}
     {...props}
   >
     {children}
