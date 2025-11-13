@@ -1,7 +1,6 @@
 import { db } from './index';
 import { users, clients, agents, tickets, comments } from './schema';
 import bcrypt from 'bcrypt';
-import { eq } from 'drizzle-orm';
 
 export async function seedDatabase() {
   console.log('🌱 Sembrando base de datos con Drizzle...');
@@ -18,7 +17,7 @@ export async function seedDatabase() {
 
     // Crear Usuario Administrador
     const adminPassword = await bcrypt.hash('admin123', 10);
-    const [admin] = await db.insert(users).values({
+    await db.insert(users).values({
       email: 'admin@tasksystemcore.com',
       password: adminPassword,
       name: 'Usuario Administrador',
@@ -152,7 +151,7 @@ export async function seedDatabase() {
       tags: ['facturación', 'pago', 'urgente'],
     }).returning();
 
-    const [ticket2] = await db.insert(tickets).values({
+    await db.insert(tickets).values({
       ticketNumber: `TKT-${Date.now()}-002`,
       subject: 'Fallo de pago en plan anual',
       description: 'Fallo de pago al actualizar al plan anual. Falló 3D Secure.',
@@ -164,7 +163,7 @@ export async function seedDatabase() {
       tags: ['facturación', 'pago'],
     }).returning();
 
-    const [ticket3] = await db.insert(tickets).values({
+    await db.insert(tickets).values({
       ticketNumber: `TKT-${Date.now()}-003`,
       subject: 'Tarjeta rechazada por el banco',
       description: 'La tarjeta de crédito está siendo rechazada por el banco. Se necesita validación.',

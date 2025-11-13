@@ -48,47 +48,57 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <header className="flex items-center justify-between p-6 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-md"></div>
-          <span className="text-lg font-semibold text-gray-900">TaskSystemCore</span>
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg shadow-lg flex items-center justify-center">
+            <span className="text-white font-bold text-lg">T</span>
+          </div>
+          <span className="text-xl font-bold text-gray-900">TaskSystemCore</span>
         </div>
         <div className="flex gap-4">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform">
             <Moon size={20} />
           </Button>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform">
             <Bell size={20} />
           </Button>
         </div>
       </header>
 
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-8">
-        <Card className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 shadow-lg">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-12 flex flex-col gap-6 rounded-l-lg">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg mb-2"></div>
-            <h2 className="text-3xl font-semibold text-gray-900">Bienvenido de nuevo</h2>
-            <p className="text-gray-600 leading-relaxed">
-              Accede a tu espacio de trabajo de soporte para gestionar tickets, clientes y reportes.
-            </p>
-            <ul className="flex flex-col gap-3">
-              <li className="flex items-center gap-3 text-gray-700">
-                <Check size={16} className="text-green-600 flex-shrink-0" />
-                <span>Listo para SSO</span>
-              </li>
-              <li className="flex items-center gap-3 text-gray-700">
-                <Check size={16} className="text-green-600 flex-shrink-0" />
-                <span>Seguro por diseño</span>
-              </li>
-              <li className="flex items-center gap-3 text-gray-700">
-                <Check size={16} className="text-green-600 flex-shrink-0" />
-                <span>Configuración rápida</span>
-              </li>
-            </ul>
+        <Card className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 shadow-2xl overflow-hidden animate-fade-in">
+          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 p-12 flex flex-col gap-6 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+            
+            <div className="relative z-10">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl mb-4 flex items-center justify-center">
+                <Check size={28} className="text-white" />
+              </div>
+              <h2 className="text-3xl font-bold mb-3">Bienvenido de nuevo</h2>
+              <p className="text-blue-100 leading-relaxed text-lg">
+                Accede a tu espacio de trabajo de soporte para gestionar tickets, clientes y reportes de forma eficiente.
+              </p>
+              
+              <div className="mt-8 space-y-4">
+                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                  <Check size={20} className="text-green-300 flex-shrink-0" />
+                  <span className="font-medium">Listo para SSO Enterprise</span>
+                </div>
+                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                  <Check size={20} className="text-green-300 flex-shrink-0" />
+                  <span className="font-medium">Seguro por diseño</span>
+                </div>
+                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                  <Check size={20} className="text-green-300 flex-shrink-0" />
+                  <span className="font-medium">Configuración rápida</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="p-12">
+          <div className="p-12 bg-white">
             <Tabs value={isLogin ? 'login' : 'register'} onValueChange={(v) => setIsLogin(v === 'login')}>
               <TabsList className="grid w-full grid-cols-2 mb-8">
                 <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
@@ -141,28 +151,41 @@ const Login = () => {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <a href="#" className="text-sm text-blue-600 hover:underline">
+                    <a href="#" className="text-sm text-blue-600 hover:underline font-medium">
                       ¿Olvidaste tu contraseña?
                     </a>
-                    <Button type="submit" disabled={loading}>
+                    <Button 
+                      type="submit" 
+                      disabled={loading}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 transition-transform"
+                    >
                       {loading ? 'Cargando...' : isLogin ? 'Iniciar Sesión' : 'Registrarse'}
                       <ArrowRight size={18} className="ml-2" />
                     </Button>
                   </div>
 
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-gray-500">O continúa con</span>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-3">
-                    <Button type="button" variant="outline" className="w-full">
+                    <Button type="button" variant="outline" className="w-full hover:bg-gray-50 hover:scale-105 transition-transform">
                       <Cloud size={18} className="mr-2" />
                       SAML SSO
                     </Button>
-                    <Button type="button" variant="outline" className="w-full">
+                    <Button type="button" variant="outline" className="w-full hover:bg-gray-50 hover:scale-105 transition-transform">
                       <Mail size={18} className="mr-2" />
                       Magic Link
                     </Button>
                   </div>
 
                   <p className="text-xs text-gray-500 text-center">
-                    Al continuar, aceptas los Términos y la Política de Privacidad.
+                    Al continuar, aceptas nuestros <a href="#" className="text-blue-600 hover:underline">Términos</a> y <a href="#" className="text-blue-600 hover:underline">Política de Privacidad</a>.
                   </p>
                 </form>
               </TabsContent>

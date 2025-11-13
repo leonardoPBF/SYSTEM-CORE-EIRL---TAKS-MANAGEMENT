@@ -27,7 +27,19 @@ const Reports = () => {
   };
 
   return (
-    <div className="max-w-7xl">
+    <div className="w-full px-6">
+      <div className="mb-8 animate-fade-in">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-lg">
+            <BarChart3 className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Reportes y Análisis</h1>
+            <p className="text-sm text-gray-500 mt-1">Visualiza métricas y tendencias de rendimiento</p>
+          </div>
+        </div>
+      </div>
+      
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -60,42 +72,47 @@ const Reports = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-gray-500">Cargando reportes...</div>
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mb-4"></div>
+          <p className="text-gray-500 font-medium">Cargando reportes...</p>
+        </div>
       ) : metrics && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card>
+            <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Nuevos Tickets</CardTitle>
-                <div className="flex items-center gap-1 text-xs text-green-600">
+                <div className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
                   <TrendingUp size={14} />
-                  <span>+6% vs período anterior</span>
+                  <span>+6%</span>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-gray-900">{metrics.newTickets || 1248}</div>
+                <p className="text-xs text-gray-500 mt-1">vs período anterior</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Resueltos</CardTitle>
-                <div className="flex items-center gap-1 text-xs text-green-600">
+                <div className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
                   <TrendingUp size={14} />
-                  <span>+4% vs período anterior</span>
+                  <span>+4%</span>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-gray-900">{metrics.resolvedTickets || 1102}</div>
+                <p className="text-xs text-gray-500 mt-1">vs período anterior</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-red-500">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Pendientes</CardTitle>
-                <div className="flex items-center gap-1 text-xs text-red-600">
+                <div className="flex items-center gap-1 text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
                   <TrendingDown size={14} />
-                  <span>-8% vs período anterior</span>
+                  <span>-8%</span>
                 </div>
               </CardHeader>
               <CardContent>

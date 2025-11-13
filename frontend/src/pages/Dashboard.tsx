@@ -2,7 +2,13 @@ import { useState, useEffect } from 'react';
 import { 
   Users, 
   Filter,
-  Save
+  Save,
+  TrendingUp,
+  TrendingDown,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Activity
 } from 'lucide-react';
 import { dashboardAPI } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,7 +49,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="max-w-7xl">
+    <div className="w-full px-6">
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <h1 className="text-3xl font-semibold text-gray-900">Panel de Control</h1>
         <div className="flex items-center gap-4 flex-wrap">
@@ -80,52 +86,70 @@ const Dashboard = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-gray-500">Cargando panel de control...</div>
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
+          <p className="text-gray-500 font-medium">Cargando panel de control...</p>
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
+            <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Agentes en Línea</CardTitle>
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Activity className="h-5 w-5 text-green-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-gray-900">{metrics.agentsOnline}</div>
-                <p className="text-sm text-green-600 mt-1">+3 vs ayer</p>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{metrics.agentsOnline}</div>
+                <div className="flex items-center gap-1 text-sm text-green-600">
+                  <TrendingUp size={14} />
+                  <span>+3 vs ayer</span>
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Tickets Sin Asignar</CardTitle>
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-blue-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-gray-900">{metrics.unassignedTickets}</div>
-                <p className="text-sm text-gray-600 mt-1">Necesitan asignación</p>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{metrics.unassignedTickets}</div>
+                <p className="text-sm text-gray-600">Necesitan asignación</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-yellow-500 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Colas Próximas a Incumplir</CardTitle>
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-gray-900">{metrics.queuesBreachingSoon}</div>
-                <p className="text-sm text-yellow-600 mt-1">Dentro de 1h</p>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{metrics.queuesBreachingSoon}</div>
+                <p className="text-sm text-yellow-600">Dentro de 1h</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-purple-500 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Carga Promedio por Agente</CardTitle>
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <CheckCircle2 className="h-5 w-5 text-purple-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-gray-900">{metrics.avgLoadPerAgent}</div>
-                <p className="text-sm text-gray-600 mt-1">Objetivo ≤ 10</p>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{metrics.avgLoadPerAgent}</div>
+                <p className="text-sm text-gray-600">Objetivo ≤ 10</p>
               </CardContent>
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Actividad de Asignación</CardTitle>
@@ -191,7 +215,7 @@ const Dashboard = () => {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-base">Tickets Sin Asignar</CardTitle>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserCog, Users } from 'lucide-react';
+import { UserCog, Users, Mail, Phone, Clock, TrendingUp, Award } from 'lucide-react';
 import { agentsAPI } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,73 +36,106 @@ const Agents = () => {
   };
 
   return (
-    <div className="max-w-7xl">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-semibold text-gray-900">Agentes</h1>
+    <div className="w-full px-6">
+      <div className="flex items-center justify-between mb-8 animate-fade-in">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg">
+            <UserCog className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Agentes</h1>
+            <p className="text-sm text-gray-500 mt-1">Gestiona tu equipo de soporte</p>
+          </div>
+        </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
             <Users size={16} className="mr-2" />
             Equipo: Todos
           </Button>
-          <Button>
+          <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:scale-105 transition-transform">
             <UserCog size={16} className="mr-2" />
             Agregar Agente
           </Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Agentes y Carga</CardTitle>
+      <Card className="hover:shadow-lg transition-all duration-300">
+        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+          <CardTitle className="text-base">Equipo de Agentes</CardTitle>
           <Button variant="outline" size="sm">
             <Users size={16} className="mr-2" />
             Equipo: Todos
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {loading ? (
-            <div className="text-center py-8 text-gray-500">Cargando agentes...</div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-3 border-green-600 mb-3"></div>
+              <p className="text-gray-500 text-sm">Cargando agentes...</p>
+            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Agente</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Abiertos</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Alta/Urgente</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Tiempo Promedio Primera Respuesta</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agents.map((agent) => (
-                    <tr key={agent.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="px-3 py-2 text-sm text-gray-900">Nombre Agente</td>
-                      <td className="px-3 py-2 text-sm text-gray-700">12</td>
-                      <td className="px-3 py-2 text-sm text-gray-700">4</td>
-                      <td className="px-3 py-2 text-sm text-gray-700">9m</td>
-                      <td className="px-3 py-2">
-                        <Badge
-                          variant={
-                            agent.status === 'Online' ? 'default' :
-                            agent.status === 'Away' ? 'secondary' :
-                            agent.status === 'At Capacity' ? 'destructive' :
-                            'secondary'
-                          }
-                          className={
-                            agent.status === 'Online' ? 'bg-green-100 text-green-800' :
-                            agent.status === 'Away' ? 'bg-yellow-100 text-yellow-800' :
-                            agent.status === 'At Capacity' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }
-                        >
-                          {getStatusLabel(agent.status || 'Offline')}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {agents.length > 0 ? agents.map((agent) => (
+                <Card key={agent.id} className="hover:shadow-lg transition-all duration-300 border-2 hover:border-green-500">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-lg">
+                          {agent.name?.charAt(0) || 'A'}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900">Agente {agent.id}</h3>
+                          <p className="text-xs text-gray-500">ID: #{agent.id}</p>
+                        </div>
+                      </div>
+                      <Badge
+                        variant={
+                          agent.status === 'Online' ? 'default' :
+                          agent.status === 'Away' ? 'secondary' :
+                          agent.status === 'At Capacity' ? 'destructive' :
+                          'secondary'
+                        }
+                        className={
+                          agent.status === 'Online' ? 'bg-green-100 text-green-800' :
+                          agent.status === 'Away' ? 'bg-yellow-100 text-yellow-800' :
+                          agent.status === 'At Capacity' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }
+                      >
+                        {getStatusLabel(agent.status || 'Offline')}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span className="text-sm text-gray-600">Tickets Abiertos</span>
+                        <span className="font-semibold text-gray-900">{agent.openTickets || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span className="text-sm text-gray-600">Alta/Urgente</span>
+                        <Badge variant="destructive" className="text-xs">{agent.highPriority || 0}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span className="text-sm text-gray-600">Tiempo Promedio</span>
+                        <span className="font-semibold text-gray-900">{agent.avgResponseTime || 'N/A'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1">
+                        Ver Detalles
+                      </Button>
+                      <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700">
+                        Asignar Ticket
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )) : (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  No hay agentes disponibles
+                </div>
+              )}
             </div>
           )}
         </CardContent>

@@ -62,25 +62,30 @@ const Tickets = () => {
   };
 
   return (
-    <div className="max-w-7xl">
-      <div className="flex items-center justify-between mb-8">
+    <div className="w-full px-6">
+      <div className="flex items-center justify-between mb-8 animate-fade-in">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-semibold text-gray-900">Ticket Creado</h1>
-          <Badge className="bg-yellow-100 text-yellow-800">Nuevo</Badge>
+          <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg">
+            <Ticket className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Gestión de Tickets</h1>
+            <p className="text-sm text-gray-500 mt-1">Administra y resuelve tickets de soporte</p>
+          </div>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">
+          <Button variant="outline" className="hover:scale-105 transition-transform">
             <Ticket size={16} className="mr-2" />
-            Ver Todos los Tickets
+            Ver Todos
           </Button>
-          <Button>
+          <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:scale-105 transition-transform">
             <Plus size={16} className="mr-2" />
-            Abrir Ticket
+            Nuevo Ticket
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3 mb-4">
@@ -100,49 +105,60 @@ const Tickets = () => {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-gray-500">Cargando tickets...</div>
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-3 border-blue-600 mb-3"></div>
+                <p className="text-gray-500 text-sm">Cargando tickets...</p>
+              </div>
             ) : (
               <div className="space-y-3">
-                {tickets.map((ticket) => (
-                  <div
-                    key={ticket.id}
-                    className={cn(
-                      "p-4 border rounded-lg cursor-pointer transition-colors",
-                      selectedTicket?.id === ticket.id
-                        ? "bg-blue-50 border-blue-500"
-                        : "border-gray-200 hover:bg-gray-50 hover:border-gray-300"
-                    )}
-                    onClick={() => setSelectedTicket(ticket)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-semibold text-gray-900">
-                        {ticket.ticketNumber} {ticket.subject}
-                      </h3>
-                      <Badge
-                        variant={
-                          ticket.priority === 'Urgent' ? 'destructive' :
-                          ticket.priority === 'High' ? 'default' :
-                          'secondary'
-                        }
-                        className="text-xs"
-                      >
-                        {getPriorityLabel(ticket.priority)}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-                      <span>{ticket.clientCompany || 'Cliente'}</span>
-                      <span>•</span>
-                      <span>{ticket.type}</span>
-                    </div>
-                    <div className="text-xs">
-                      {ticket.assignedTo ? (
-                        <span className="text-green-600">{getStatusLabel(ticket.status)}</span>
-                      ) : (
-                        <span className="text-gray-400">Sin Asignar</span>
+                {tickets.length > 0 ? (
+                  tickets.map((ticket) => (
+                    <div
+                      key={ticket.id}
+                      className={cn(
+                        "p-4 border rounded-lg cursor-pointer transition-colors",
+                        selectedTicket?.id === ticket.id
+                          ? "bg-blue-50 border-blue-500"
+                          : "border-gray-200 hover:bg-gray-50 hover:border-gray-300"
                       )}
+                      onClick={() => setSelectedTicket(ticket)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-semibold text-gray-900">
+                          {ticket.ticketNumber} {ticket.subject}
+                        </h3>
+                        <Badge
+                          variant={
+                            ticket.priority === 'Urgent' ? 'destructive' :
+                            ticket.priority === 'High' ? 'default' :
+                            'secondary'
+                          }
+                          className="text-xs"
+                        >
+                          {getPriorityLabel(ticket.priority)}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+                        <span>{ticket.clientCompany || 'Cliente'}</span>
+                        <span>•</span>
+                        <span>{ticket.type}</span>
+                      </div>
+                      <div className="text-xs">
+                        {ticket.assignedTo ? (
+                          <span className="text-green-600">{getStatusLabel(ticket.status)}</span>
+                        ) : (
+                          <span className="text-gray-400">Sin Asignar</span>
+                        )}
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <Ticket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 font-medium">No hay tickets disponibles</p>
+                    <p className="text-sm text-gray-400 mt-2">Crea un nuevo ticket para comenzar</p>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </CardContent>

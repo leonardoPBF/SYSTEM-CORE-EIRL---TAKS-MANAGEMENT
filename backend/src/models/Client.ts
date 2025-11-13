@@ -21,7 +21,7 @@ export class ClientModel {
       phone: client.phone || undefined,
       address: client.address || undefined,
       segment: client.segment || undefined,
-      status: client.status,
+      status: client.status as 'Active' | 'At Risk' | 'Inactive',
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
     };
@@ -39,7 +39,7 @@ export class ClientModel {
       phone: client.phone || undefined,
       address: client.address || undefined,
       segment: client.segment || undefined,
-      status: client.status,
+      status: client.status as 'Active' | 'At Risk' | 'Inactive',
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
     };
@@ -57,7 +57,7 @@ export class ClientModel {
       phone: client.phone || undefined,
       address: client.address || undefined,
       segment: client.segment || undefined,
-      status: client.status,
+      status: client.status as 'Active' | 'At Risk' | 'Inactive',
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
     };
@@ -67,20 +67,20 @@ export class ClientModel {
     status?: string;
     segment?: string;
   }): Promise<IClient[]> {
-    let query = db.select().from(clients);
-
+    const conditions = [];
+    
     if (filters) {
-      const conditions = [];
       if (filters.status) {
         conditions.push(eq(clients.status, filters.status));
       }
       if (filters.segment) {
         conditions.push(eq(clients.segment, filters.segment));
       }
-      if (conditions.length > 0) {
-        query = db.select().from(clients).where(and(...conditions));
-      }
     }
+
+    const query = conditions.length > 0
+      ? db.select().from(clients).where(and(...conditions))
+      : db.select().from(clients);
 
     const allClients = await query;
     return allClients.map(client => ({
@@ -90,7 +90,7 @@ export class ClientModel {
       phone: client.phone || undefined,
       address: client.address || undefined,
       segment: client.segment || undefined,
-      status: client.status,
+      status: client.status as 'Active' | 'At Risk' | 'Inactive',
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
     })).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -113,7 +113,7 @@ export class ClientModel {
       phone: updated.phone || undefined,
       address: updated.address || undefined,
       segment: updated.segment || undefined,
-      status: updated.status,
+      status: (updated.status as 'Active' | 'At Risk' | 'Inactive'),
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     };
@@ -133,7 +133,7 @@ export class ClientModel {
       phone: client.phone || undefined,
       address: client.address || undefined,
       segment: client.segment || undefined,
-      status: client.status,
+      status: (client.status as 'Active' | 'At Risk' | 'Inactive'),
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
     }));

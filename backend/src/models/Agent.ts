@@ -59,20 +59,20 @@ export class AgentModel {
     team?: string;
     status?: AgentStatus;
   }): Promise<IAgent[]> {
-    let query = db.select().from(agents);
-
+    const conditions = [];
+    
     if (filters) {
-      const conditions = [];
       if (filters.team) {
         conditions.push(eq(agents.team, filters.team));
       }
       if (filters.status) {
         conditions.push(eq(agents.status, filters.status.toLowerCase().replace('_', '_') as any));
       }
-      if (conditions.length > 0) {
-        query = db.select().from(agents).where(and(...conditions));
-      }
     }
+
+    const query = conditions.length > 0
+      ? db.select().from(agents).where(and(...conditions))
+      : db.select().from(agents);
 
     const allAgents = await query;
     return allAgents.map(agent => ({

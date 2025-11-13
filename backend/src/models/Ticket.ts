@@ -4,7 +4,7 @@ import { tickets } from '../db/schema';
 import { Ticket as ITicket, TicketStatus, TicketPriority } from '../types';
 
 export class TicketModel {
-  private static ticketCounter = 4900;
+  private static ticketNumber = 4900;
 
   static async create(data: Omit<ITicket, 'id' | 'ticketNumber' | 'createdAt' | 'updatedAt'>): Promise<ITicket> {
     const ticketNumber = `#${++this.ticketNumber}`;
@@ -34,9 +34,9 @@ export class TicketModel {
       assignedTo: ticket.assignedTo || undefined,
       priority: ticket.priority.toUpperCase() as TicketPriority,
       status: ticket.status.toUpperCase().replace('_', '_') as TicketStatus,
-      type: ticket.type || undefined,
+      type: ticket.type || '',
       source: ticket.source.toUpperCase() as any,
-      tags: ticket.tags || undefined,
+      tags: ticket.tags || [],
       queue: ticket.queue || undefined,
       sla: ticket.sla || undefined,
       dueDate: ticket.dueDate || undefined,
@@ -70,10 +70,9 @@ export class TicketModel {
     priority?: TicketPriority;
     queue?: string;
   }): Promise<ITicket[]> {
-    let query = db.select().from(tickets);
-
+    const conditions = [];
+    
     if (filters) {
-      const conditions = [];
       if (filters.clientId) {
         conditions.push(eq(tickets.clientId, filters.clientId));
       }
@@ -89,10 +88,11 @@ export class TicketModel {
       if (filters.queue) {
         conditions.push(eq(tickets.queue, filters.queue));
       }
-      if (conditions.length > 0) {
-        query = db.select().from(tickets).where(and(...conditions));
-      }
     }
+
+    const query = conditions.length > 0
+      ? db.select().from(tickets).where(and(...conditions))
+      : db.select().from(tickets);
 
     const allTickets = await query;
     return allTickets.map(t => this.mapTicket(t))
@@ -158,9 +158,9 @@ export class TicketModel {
       assignedTo: ticket.assignedTo || undefined,
       priority: ticket.priority.toUpperCase() as TicketPriority,
       status: ticket.status.toUpperCase().replace('_', '_') as TicketStatus,
-      type: ticket.type || undefined,
+      type: ticket.type || '',
       source: ticket.source.toUpperCase() as any,
-      tags: ticket.tags || undefined,
+      tags: ticket.tags || [],
       queue: ticket.queue || undefined,
       sla: ticket.sla || undefined,
       dueDate: ticket.dueDate || undefined,
