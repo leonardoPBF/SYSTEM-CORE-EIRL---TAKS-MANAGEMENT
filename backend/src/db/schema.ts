@@ -2,8 +2,8 @@ import { pgTable, uuid, varchar, text, timestamp, boolean, integer, pgEnum } fro
 import { relations } from 'drizzle-orm';
 
 // Enums
-export const userRoleEnum = pgEnum('user_role', ['admin', 'agent', 'client', 'manager']);
-export const ticketStatusEnum = pgEnum('ticket_status', ['open', 'assigned', 'in_progress', 'resolved', 'closed']);
+export const userRoleEnum = pgEnum('user_role', ['admin', 'it_director', 'it_team', 'client']);
+export const ticketStatusEnum = pgEnum('ticket_status', ['open', 'pending_director', 'assigned', 'in_progress', 'resolved', 'closed']);
 export const ticketPriorityEnum = pgEnum('ticket_priority', ['low', 'medium', 'high', 'urgent']);
 export const ticketSourceEnum = pgEnum('ticket_source', ['email', 'chat', 'phone', 'portal', 'api']);
 export const agentStatusEnum = pgEnum('agent_status', ['online', 'away', 'offline', 'at_capacity']);
@@ -38,9 +38,11 @@ export const clients = pgTable('clients', {
 export const agents = pgTable('agents', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id).notNull(),
+  role: varchar('role', { length: 50 }).default('it_team').notNull(),
   team: varchar('team', { length: 255 }),
   status: agentStatusEnum('status').default('offline').notNull(),
   maxTickets: integer('max_tickets').default(10).notNull(),
+  canAssignTickets: boolean('can_assign_tickets').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -52,6 +54,8 @@ export const tickets = pgTable('tickets', {
   subject: varchar('subject', { length: 500 }).notNull(),
   description: text('description').notNull(),
   clientId: uuid('client_id').references(() => clients.id).notNull(),
+  createdBy: uuid('created_by').references(() => users.id).notNull(),
+  reviewedBy: uuid('reviewed_by').references(() => users.id),
   assignedTo: uuid('assigned_to').references(() => agents.id),
   priority: ticketPriorityEnum('priority').default('medium').notNull(),
   status: ticketStatusEnum('status').default('open').notNull(),
@@ -61,6 +65,8 @@ export const tickets = pgTable('tickets', {
   queue: varchar('queue', { length: 255 }),
   sla: varchar('sla', { length: 255 }),
   dueDate: timestamp('due_date'),
+  reviewedAt: timestamp('reviewed_at'),
+  assignedAt: timestamp('assigned_at'),
   resolvedAt: timestamp('resolved_at'),
   closedAt: timestamp('closed_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

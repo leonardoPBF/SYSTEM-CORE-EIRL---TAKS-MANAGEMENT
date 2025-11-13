@@ -42,10 +42,10 @@ const Dashboard = () => {
   };
 
   const agents = [
-    { name: 'Leslie Alexander', open: 12, highUrgent: 4, avgTime: '9m', status: 'Online' },
-    { name: 'Devon Lane', open: 7, highUrgent: 2, avgTime: '11m', status: 'Online' },
-    { name: 'Jenny Wilson', open: 15, highUrgent: 6, avgTime: '13m', status: 'At Capacity' },
-    { name: 'Guy Hawkins', open: 5, highUrgent: 1, avgTime: '10m', status: 'Away' },
+    { name: 'Leslie Alexander', role: 'IT_Director', open: 12, highUrgent: 4, avgTime: '9m', status: 'Online' },
+    { name: 'Devon Lane', role: 'IT_Team', open: 7, highUrgent: 2, avgTime: '11m', status: 'Online' },
+    { name: 'Jenny Wilson', role: 'IT_Team', open: 15, highUrgent: 6, avgTime: '13m', status: 'At Capacity' },
+    { name: 'Guy Hawkins', role: 'IT_Team', open: 5, highUrgent: 1, avgTime: '10m', status: 'Away' },
   ];
 
   return (
@@ -95,7 +95,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Agentes en Línea</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">Equipo TI Online</CardTitle>
                 <div className="p-2 bg-green-100 rounded-lg">
                   <Activity className="h-5 w-5 text-green-600" />
                 </div>
@@ -104,21 +104,21 @@ const Dashboard = () => {
                 <div className="text-3xl font-bold text-gray-900 mb-1">{metrics.agentsOnline}</div>
                 <div className="flex items-center gap-1 text-sm text-green-600">
                   <TrendingUp size={14} />
-                  <span>+3 vs ayer</span>
+                  <span>Director + Equipo</span>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Tickets Sin Asignar</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">Pendientes Director TI</CardTitle>
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <AlertCircle className="h-5 w-5 text-blue-600" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-gray-900 mb-1">{metrics.unassignedTickets}</div>
-                <p className="text-sm text-gray-600">Necesitan asignación</p>
+                <p className="text-sm text-gray-600">Requieren revisión</p>
               </CardContent>
             </Card>
 
@@ -137,14 +137,14 @@ const Dashboard = () => {
 
             <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-purple-500 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Carga Promedio por Agente</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">Carga Promedio Equipo TI</CardTitle>
                 <div className="p-2 bg-purple-100 rounded-lg">
                   <CheckCircle2 className="h-5 w-5 text-purple-600" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-gray-900 mb-1">{metrics.avgLoadPerAgent}</div>
-                <p className="text-sm text-gray-600">Objetivo ≤ 10</p>
+                <p className="text-sm text-gray-600">Tickets por miembro</p>
               </CardContent>
             </Card>
           </div>

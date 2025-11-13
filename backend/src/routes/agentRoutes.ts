@@ -12,7 +12,7 @@ import { UserRole } from '../types';
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize(UserRole.ADMIN, UserRole.MANAGER));
+router.use(authorize(UserRole.ADMIN, UserRole.IT_DIRECTOR));
 
 router.get('/', getAgents);
 router.get('/:id', getAgentById);

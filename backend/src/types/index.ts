@@ -1,15 +1,15 @@
 export enum UserRole {
   ADMIN = 'Admin',
-  AGENT = 'Agent',
-  CLIENT = 'Client',
-  MANAGER = 'Manager'
+  IT_DIRECTOR = 'IT_Director',
+  IT_TEAM = 'IT_Team',
+  CLIENT = 'Client'
 }
 
 export enum TicketStatus {
   OPEN = 'Open',
+  PENDING_DIRECTOR = 'Pending_Director',
   ASSIGNED = 'Assigned',
   IN_PROGRESS = 'In Progress',
-  PENDING = 'Pending',
   RESOLVED = 'Resolved',
   CLOSED = 'Closed'
 }
@@ -63,9 +63,11 @@ export interface Client {
 export interface Agent {
   id: string;
   userId: string;
+  role: 'IT_Director' | 'IT_Team';
   team?: string;
   status: AgentStatus;
   maxTickets: number;
+  canAssignTickets?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,6 +78,8 @@ export interface Ticket {
   subject: string;
   description: string;
   clientId: string;
+  createdBy: string;
+  reviewedBy?: string;
   assignedTo?: string;
   priority: TicketPriority;
   status: TicketStatus;
@@ -85,6 +89,8 @@ export interface Ticket {
   queue?: string;
   sla?: string;
   dueDate?: Date;
+  reviewedAt?: Date;
+  assignedAt?: Date;
   resolvedAt?: Date;
   closedAt?: Date;
   createdAt: Date;

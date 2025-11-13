@@ -8,21 +8,25 @@ export class TicketModel {
 
   static async create(data: Omit<ITicket, 'id' | 'ticketNumber' | 'createdAt' | 'updatedAt'>): Promise<ITicket> {
     const ticketNumber = `#${++this.ticketNumber}`;
-    
+
     const [ticket] = await db.insert(tickets).values({
       ticketNumber,
       subject: data.subject,
       description: data.description,
       clientId: data.clientId,
+      createdBy: data.createdBy,
+      reviewedBy: data.reviewedBy,
       assignedTo: data.assignedTo,
       priority: data.priority.toLowerCase() as 'low' | 'medium' | 'high' | 'urgent',
-      status: data.status.toLowerCase().replace('_', '_') as 'open' | 'assigned' | 'in_progress' | 'resolved' | 'closed',
+      status: data.status.toLowerCase().replace('_', '_') as 'open' | 'pending_director' | 'assigned' | 'in_progress' | 'resolved' | 'closed',
       type: data.type,
       source: data.source.toLowerCase() as 'email' | 'chat' | 'phone' | 'portal' | 'api',
       tags: data.tags,
       queue: data.queue,
       sla: data.sla,
       dueDate: data.dueDate,
+      reviewedAt: data.reviewedAt,
+      assignedAt: data.assignedAt,
     }).returning();
 
     return {
@@ -31,6 +35,8 @@ export class TicketModel {
       subject: ticket.subject,
       description: ticket.description,
       clientId: ticket.clientId,
+      createdBy: ticket.createdBy,
+      reviewedBy: ticket.reviewedBy || undefined,
       assignedTo: ticket.assignedTo || undefined,
       priority: ticket.priority.toUpperCase() as TicketPriority,
       status: ticket.status.toUpperCase().replace('_', '_') as TicketStatus,
@@ -40,14 +46,14 @@ export class TicketModel {
       queue: ticket.queue || undefined,
       sla: ticket.sla || undefined,
       dueDate: ticket.dueDate || undefined,
+      reviewedAt: ticket.reviewedAt || undefined,
+      assignedAt: ticket.assignedAt || undefined,
       resolvedAt: ticket.resolvedAt || undefined,
       closedAt: ticket.closedAt || undefined,
       createdAt: ticket.createdAt,
       updatedAt: ticket.updatedAt,
     };
-  }
-
-  static async findById(id: string): Promise<ITicket | null> {
+  }  static async findById(id: string): Promise<ITicket | null> {
     const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id)).limit(1);
     
     if (!ticket) return null;
@@ -155,6 +161,8 @@ export class TicketModel {
       subject: ticket.subject,
       description: ticket.description,
       clientId: ticket.clientId,
+      createdBy: ticket.createdBy,
+      reviewedBy: ticket.reviewedBy || undefined,
       assignedTo: ticket.assignedTo || undefined,
       priority: ticket.priority.toUpperCase() as TicketPriority,
       status: ticket.status.toUpperCase().replace('_', '_') as TicketStatus,
@@ -164,6 +172,8 @@ export class TicketModel {
       queue: ticket.queue || undefined,
       sla: ticket.sla || undefined,
       dueDate: ticket.dueDate || undefined,
+      reviewedAt: ticket.reviewedAt || undefined,
+      assignedAt: ticket.assignedAt || undefined,
       resolvedAt: ticket.resolvedAt || undefined,
       closedAt: ticket.closedAt || undefined,
       createdAt: ticket.createdAt,

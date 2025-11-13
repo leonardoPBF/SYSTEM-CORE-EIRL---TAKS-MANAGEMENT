@@ -7,17 +7,15 @@ import { User as IUser, UserRole } from '../types';
 export class UserModel {
   static async create(data: Omit<IUser, 'id' | 'createdAt' | 'updatedAt' | 'password' | 'isActive'> & { password: string }): Promise<IUser> {
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    
+
     const [user] = await db.insert(users).values({
       email: data.email,
       password: hashedPassword,
       name: data.name,
-      role: data.role.toLowerCase() as 'admin' | 'agent' | 'client' | 'manager',
+      role: data.role.toLowerCase().replace('_', '_') as 'admin' | 'it_director' | 'it_team' | 'client',
       avatar: data.avatar,
       isActive: true,
-    }).returning();
-
-    return {
+    }).returning();    return {
       id: user.id,
       email: user.email,
       name: user.name,
@@ -123,7 +121,7 @@ export class UserModel {
   static async findByRole(role: UserRole): Promise<IUser[]> {
     const roleUsers = await db.select()
       .from(users)
-      .where(eq(users.role, role.toLowerCase() as 'admin' | 'agent' | 'client' | 'manager'));
+      .where(eq(users.role, role.toLowerCase().replace('_', '_') as 'admin' | 'it_director' | 'it_team' | 'client'));
     
     return roleUsers.map(user => ({
       id: user.id,

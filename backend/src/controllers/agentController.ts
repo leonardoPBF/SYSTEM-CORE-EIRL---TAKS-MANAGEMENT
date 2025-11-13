@@ -14,6 +14,7 @@ export const createAgent = async (req: AuthRequest, res: Response): Promise<void
 
     const agent = await AgentModel.create({
       userId,
+      role: 'IT_Team',
       team,
       status: status || AgentStatus.OFFLINE,
       maxTickets: maxTickets || 10

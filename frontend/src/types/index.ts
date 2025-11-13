@@ -2,22 +2,28 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'Admin' | 'Agent' | 'Client';
+  role: 'Admin' | 'IT_Director' | 'IT_Team' | 'Client';
   avatar?: string;
+  department?: string;
 }
 
 export interface Ticket {
   id: string;
+  ticketNumber: string;
   subject: string;
   client: string;
   clientCompany: string;
   priority: 'Low' | 'Medium' | 'High' | 'Urgent';
   type: string;
   source: 'Email' | 'Phone' | 'Chat' | 'Portal';
-  status: 'Open' | 'Assigned' | 'In Progress' | 'Resolved' | 'Closed';
-  assignedTo?: string;
+  status: 'Open' | 'Pending_Director' | 'Assigned' | 'In Progress' | 'Resolved' | 'Closed';
+  createdBy: string; // Cliente que crea el ticket
+  reviewedBy?: string; // Director TI que revisa
+  assignedTo?: string; // Miembro del Equipo TI asignado
   createdAt: string;
   updatedAt: string;
+  reviewedAt?: string;
+  assignedAt?: string;
   sla?: string;
   tags?: string[];
 }
@@ -38,11 +44,14 @@ export interface Client {
 export interface Agent {
   id: string;
   name: string;
-  open: number;
-  highUrgent: number;
-  avgTimeToFirstReply: string;
+  email: string;
+  role: 'IT_Director' | 'IT_Team';
+  openTickets: number;
+  highPriority: number;
+  avgResponseTime: string;
   status: 'Online' | 'Away' | 'Offline' | 'At Capacity';
   team?: string;
+  canAssignTickets?: boolean; // Solo para IT_Director
 }
 
 export interface DashboardMetrics {

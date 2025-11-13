@@ -7,17 +7,21 @@ export class AgentModel {
   static async create(data: Omit<IAgent, 'id' | 'createdAt' | 'updatedAt'>): Promise<IAgent> {
     const [agent] = await db.insert(agents).values({
       userId: data.userId,
+      role: data.role.toLowerCase().replace('_', '_'),
       team: data.team,
       status: data.status.toLowerCase().replace('_', '_') as 'online' | 'away' | 'offline' | 'at_capacity',
       maxTickets: data.maxTickets || 10,
+      canAssignTickets: data.role === 'IT_Director' ? true : false,
     }).returning();
 
     return {
       id: agent.id,
       userId: agent.userId,
+      role: agent.role.toUpperCase().replace('_', '_') as 'IT_Director' | 'IT_Team',
       team: agent.team || undefined,
       status: agent.status.toUpperCase().replace('_', '_') as AgentStatus,
       maxTickets: agent.maxTickets,
+      canAssignTickets: agent.canAssignTickets || false,
       createdAt: agent.createdAt,
       updatedAt: agent.updatedAt,
     };
@@ -25,37 +29,37 @@ export class AgentModel {
 
   static async findById(id: string): Promise<IAgent | null> {
     const [agent] = await db.select().from(agents).where(eq(agents.id, id)).limit(1);
-    
+
     if (!agent) return null;
 
     return {
       id: agent.id,
       userId: agent.userId,
+      role: agent.role.toUpperCase().replace('_', '_') as 'IT_Director' | 'IT_Team',
       team: agent.team || undefined,
       status: agent.status.toUpperCase().replace('_', '_') as AgentStatus,
       maxTickets: agent.maxTickets,
+      canAssignTickets: agent.canAssignTickets || false,
       createdAt: agent.createdAt,
       updatedAt: agent.updatedAt,
     };
-  }
-
-  static async findByUserId(userId: string): Promise<IAgent | null> {
+  }  static async findByUserId(userId: string): Promise<IAgent | null> {
     const [agent] = await db.select().from(agents).where(eq(agents.userId, userId)).limit(1);
-    
+
     if (!agent) return null;
 
     return {
       id: agent.id,
       userId: agent.userId,
+      role: agent.role.toUpperCase().replace('_', '_') as 'IT_Director' | 'IT_Team',
       team: agent.team || undefined,
       status: agent.status.toUpperCase().replace('_', '_') as AgentStatus,
       maxTickets: agent.maxTickets,
+      canAssignTickets: agent.canAssignTickets || false,
       createdAt: agent.createdAt,
       updatedAt: agent.updatedAt,
     };
-  }
-
-  static async findAll(filters?: {
+  }  static async findAll(filters?: {
     team?: string;
     status?: AgentStatus;
   }): Promise<IAgent[]> {
@@ -78,9 +82,11 @@ export class AgentModel {
     return allAgents.map(agent => ({
       id: agent.id,
       userId: agent.userId,
+      role: agent.role.toUpperCase().replace('_', '_') as 'IT_Director' | 'IT_Team',
       team: agent.team || undefined,
       status: agent.status.toUpperCase().replace('_', '_') as AgentStatus,
       maxTickets: agent.maxTickets,
+      canAssignTickets: agent.canAssignTickets || false,
       createdAt: agent.createdAt,
       updatedAt: agent.updatedAt,
     }));
@@ -103,9 +109,11 @@ export class AgentModel {
     return {
       id: updated.id,
       userId: updated.userId,
+      role: updated.role.toUpperCase().replace('_', '_') as 'IT_Director' | 'IT_Team',
       team: updated.team || undefined,
       status: updated.status.toUpperCase().replace('_', '_') as AgentStatus,
       maxTickets: updated.maxTickets,
+      canAssignTickets: updated.canAssignTickets || false,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     };
@@ -121,9 +129,11 @@ export class AgentModel {
     return results.map(agent => ({
       id: agent.id,
       userId: agent.userId,
+      role: agent.role.toUpperCase().replace('_', '_') as 'IT_Director' | 'IT_Team',
       team: agent.team || undefined,
       status: agent.status.toUpperCase().replace('_', '_') as AgentStatus,
       maxTickets: agent.maxTickets,
+      canAssignTickets: agent.canAssignTickets || false,
       createdAt: agent.createdAt,
       updatedAt: agent.updatedAt,
     }));

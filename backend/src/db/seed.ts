@@ -33,7 +33,7 @@ export async function seedDatabase() {
       email: 'leslie@tasksystemcore.com',
       password: agent1Password,
       name: 'Leslie Alexander',
-      role: 'agent',
+      role: 'it_team',
       isActive: true,
     }).returning();
 
@@ -42,7 +42,7 @@ export async function seedDatabase() {
       email: 'devon@tasksystemcore.com',
       password: agent2Password,
       name: 'Devon Lane',
-      role: 'agent',
+      role: 'it_team',
       isActive: true,
     }).returning();
 
@@ -51,7 +51,7 @@ export async function seedDatabase() {
       email: 'jenny@tasksystemcore.com',
       password: agent3Password,
       name: 'Jenny Wilson',
-      role: 'agent',
+      role: 'it_team',
       isActive: true,
     }).returning();
 
@@ -117,6 +117,7 @@ export async function seedDatabase() {
     // Crear Agentes
     const [agentRecord1] = await db.insert(agents).values({
       userId: agent1User.id,
+      role: 'it_team',
       team: 'Equipo de Soporte 1',
       status: 'online',
       maxTickets: 15,
@@ -124,6 +125,7 @@ export async function seedDatabase() {
 
     const [agentRecord2] = await db.insert(agents).values({
       userId: agent2User.id,
+      role: 'it_team',
       team: 'Equipo de Soporte 1',
       status: 'online',
       maxTickets: 12,
@@ -131,6 +133,7 @@ export async function seedDatabase() {
 
     await db.insert(agents).values({
       userId: agent3User.id,
+      role: 'it_team',
       team: 'Equipo de Soporte 2',
       status: 'at_capacity',
       maxTickets: 10,
@@ -144,6 +147,7 @@ export async function seedDatabase() {
       subject: 'Fallo de pago en checkout',
       description: 'Los clientes están experimentando fallos de pago al intentar completar el checkout. El mensaje de error muestra que el desafío 3D Secure está fallando.',
       clientId: clientRecord1.id,
+      createdBy: client1User.id,
       priority: 'high',
       status: 'open',
       type: 'Facturación',
@@ -156,6 +160,7 @@ export async function seedDatabase() {
       subject: 'Fallo de pago en plan anual',
       description: 'Fallo de pago al actualizar al plan anual. Falló 3D Secure.',
       clientId: clientRecord1.id,
+      createdBy: client1User.id,
       priority: 'medium',
       status: 'resolved',
       type: 'Facturación',
@@ -168,6 +173,7 @@ export async function seedDatabase() {
       subject: 'Tarjeta rechazada por el banco',
       description: 'La tarjeta de crédito está siendo rechazada por el banco. Se necesita validación.',
       clientId: clientRecord2.id,
+      createdBy: client2User.id,
       priority: 'medium',
       status: 'open',
       type: 'Pagos',
@@ -180,6 +186,7 @@ export async function seedDatabase() {
       subject: 'No se puede acceder al panel de control',
       description: 'El usuario no puede iniciar sesión en el panel de control. Obtiene error 403.',
       clientId: clientRecord3.id,
+      createdBy: client3User.id,
       assignedTo: agentRecord1.id,
       priority: 'high',
       status: 'assigned',
@@ -193,6 +200,7 @@ export async function seedDatabase() {
       subject: 'Solicitud de función: Modo oscuro',
       description: 'Me gustaría solicitar la función de modo oscuro para la aplicación.',
       clientId: clientRecord1.id,
+      createdBy: client1User.id,
       assignedTo: agentRecord2.id,
       priority: 'low',
       status: 'in_progress',

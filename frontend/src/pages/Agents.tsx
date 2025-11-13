@@ -35,6 +35,15 @@ const Agents = () => {
     return labels[status] || status;
   };
 
+  const getRoleLabel = (role: string) => {
+    const labels: Record<string, string> = {
+      'IT_Director': 'Director TI',
+      'IT_Team': 'Equipo TI',
+      'Admin': 'Administrador'
+    };
+    return labels[role] || role;
+  };
+
   return (
     <div className="w-full px-6">
       <div className="flex items-center justify-between mb-8 animate-fade-in">
@@ -43,8 +52,8 @@ const Agents = () => {
             <UserCog className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Agentes</h1>
-            <p className="text-sm text-gray-500 mt-1">Gestiona tu equipo de soporte</p>
+            <h1 className="text-3xl font-bold text-gray-900">Equipo de TI</h1>
+            <p className="text-sm text-gray-500 mt-1">Director TI y Equipo Técnico</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -54,14 +63,14 @@ const Agents = () => {
           </Button>
           <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:scale-105 transition-transform">
             <UserCog size={16} className="mr-2" />
-            Agregar Agente
+            Agregar Miembro TI
           </Button>
         </div>
       </div>
 
       <Card className="hover:shadow-lg transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 border-b">
-          <CardTitle className="text-base">Equipo de Agentes</CardTitle>
+          <CardTitle className="text-base">Director TI y Equipo Técnico</CardTitle>
           <Button variant="outline" size="sm">
             <Users size={16} className="mr-2" />
             Equipo: Todos
@@ -81,11 +90,11 @@ const Agents = () => {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-lg">
-                          {agent.name?.charAt(0) || 'A'}
+                          {agent.name?.charAt(0) || 'T'}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-gray-900">Agente {agent.id}</h3>
-                          <p className="text-xs text-gray-500">ID: #{agent.id}</p>
+                          <h3 className="font-semibold text-gray-900">{agent.name || `Miembro ${agent.id}`}</h3>
+                          <p className="text-xs text-gray-500">{getRoleLabel(agent.role || 'IT_Team')}</p>
                         </div>
                       </div>
                       <Badge

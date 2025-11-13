@@ -15,7 +15,7 @@ router.use(authenticate);
 
 router.get('/', getClients);
 router.get('/:id', getClientById);
-router.post('/', authorize(UserRole.ADMIN, UserRole.MANAGER), createClient);
+router.post('/', authorize(UserRole.ADMIN, UserRole.IT_DIRECTOR), createClient);
 router.put('/:id', updateClient);
 router.delete('/:id', authorize(UserRole.ADMIN), deleteClient);
 

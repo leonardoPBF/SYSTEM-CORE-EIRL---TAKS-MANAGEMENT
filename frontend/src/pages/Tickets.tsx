@@ -9,20 +9,43 @@ import {
   Tag,
   ExternalLink
 } from 'lucide-react';
-import { ticketsAPI } from '@/services/api';
+import { ticketsAPI, clientsAPI } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 const Tickets = () => {
   const [tickets, setTickets] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showNewTicketDialog, setShowNewTicketDialog] = useState(false);
+  const [clients, setClients] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    subject: '',
+    description: '',
+    clientId: '',
+    priority: 'medium',
+    type: 'General',
+    source: 'portal',
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadTickets();
+    loadClients();
   }, []);
 
   const loadTickets = async () => {
@@ -40,6 +63,57 @@ const Tickets = () => {
     }
   };
 
+  const loadClients = async () => {
+    try {
+      const data = await clientsAPI.getAll();
+      setClients(data);
+    } catch (error) {
+      console.error('Error cargando clientes:', error);
+    }
+  };
+
+  const handleCreateTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.subject || !formData.description || !formData.clientId) {
+      alert('Por favor complete todos los campos requeridos');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await ticketsAPI.create({
+        subject: formData.subject,
+        description: formData.description,
+        clientId: formData.clientId,
+        priority: formData.priority,
+        type: formData.type,
+        source: formData.source,
+      });
+      
+      // Limpiar formulario
+      setFormData({
+        subject: '',
+        description: '',
+        clientId: '',
+        priority: 'medium',
+        type: 'General',
+        source: 'portal',
+      });
+      
+      // Cerrar diálogo y recargar tickets
+      setShowNewTicketDialog(false);
+      await loadTickets();
+      
+      alert('Ticket creado exitosamente');
+    } catch (error) {
+      console.error('Error creando ticket:', error);
+      alert('Error al crear el ticket. Por favor intente nuevamente.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getPriorityLabel = (priority: string) => {
     const labels: Record<string, string> = {
       'Low': 'Baja',
@@ -53,7 +127,8 @@ const Tickets = () => {
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
       'Open': 'Abierto',
-      'Assigned': 'Asignado',
+      'Pending_Director': 'Pendiente Director TI',
+      'Assigned': 'Asignado a Equipo TI',
       'In Progress': 'En Progreso',
       'Resolved': 'Resuelto',
       'Closed': 'Cerrado'
@@ -78,7 +153,10 @@ const Tickets = () => {
             <Ticket size={16} className="mr-2" />
             Ver Todos
           </Button>
-          <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:scale-105 transition-transform">
+          <Button 
+            onClick={() => setShowNewTicketDialog(true)}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:scale-105 transition-transform"
+          >
             <Plus size={16} className="mr-2" />
             Nuevo Ticket
           </Button>
@@ -203,29 +281,38 @@ const Tickets = () => {
               </div>
 
               <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-4">Próximas Acciones</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Flujo del Ticket</h3>
                 <div className="space-y-3 mb-4">
-                  <div className="flex items-center gap-3 text-sm text-gray-700">
-                    <User size={18} />
-                    <span>Asignar a un agente</span>
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                    <User size={18} className="text-blue-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">1. Cliente crea ticket</p>
+                      <p className="text-xs text-gray-500">Estado: Abierto</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-gray-700">
-                    <Clock size={18} />
-                    <span>Establecer SLA para primera respuesta</span>
+                  <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
+                    <Clock size={18} className="text-yellow-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">2. Director TI revisa</p>
+                      <p className="text-xs text-gray-500">Estado: Pendiente Director TI</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-gray-700">
-                    <Tag size={18} />
-                    <span>Agregar etiquetas para facturación, pago</span>
+                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                    <Tag size={18} className="text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">3. Asignado a Equipo TI</p>
+                      <p className="text-xs text-gray-500">Estado: Asignado/En Progreso</p>
+                    </div>
                   </div>
                 </div>
                 <div className="flex gap-3">
                   <Button variant="outline">
                     <User size={16} className="mr-2" />
-                    Asignar
+                    Revisar como Director
                   </Button>
                   <Button>
                     <ExternalLink size={16} className="mr-2" />
-                    Enviar Primera Respuesta
+                    Asignar a Equipo TI
                   </Button>
                 </div>
               </div>
@@ -255,6 +342,126 @@ const Tickets = () => {
           </Card>
         )}
       </div>
+
+      {/* Diálogo para Nuevo Ticket */}
+      <Dialog open={showNewTicketDialog} onOpenChange={setShowNewTicketDialog}>
+        <DialogContent onClose={() => setShowNewTicketDialog(false)}>
+          <DialogHeader>
+            <DialogTitle>Crear Nuevo Ticket</DialogTitle>
+            <DialogDescription>
+              Complete los detalles del ticket para enviarlo al equipo de soporte
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleCreateTicket}>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="clientId">Cliente *</Label>
+                <Select
+                  id="clientId"
+                  value={formData.clientId}
+                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                  required
+                >
+                  <option value="">Seleccione un cliente</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.company || client.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="subject">Asunto *</Label>
+                <Input
+                  id="subject"
+                  type="text"
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  placeholder="Ej: Problema con acceso al sistema"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description">Descripción *</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Describa detalladamente el problema o solicitud"
+                  rows={4}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="priority">Prioridad</Label>
+                  <Select
+                    id="priority"
+                    value={formData.priority}
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                  >
+                    <option value="low">Baja</option>
+                    <option value="medium">Media</option>
+                    <option value="high">Alta</option>
+                    <option value="urgent">Urgente</option>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="type">Tipo</Label>
+                  <Select
+                    id="type"
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  >
+                    <option value="General">General</option>
+                    <option value="Técnico">Técnico</option>
+                    <option value="Consulta">Consulta</option>
+                    <option value="Incidente">Incidente</option>
+                    <option value="Solicitud">Solicitud</option>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="source">Fuente</Label>
+                <Select
+                  id="source"
+                  value={formData.source}
+                  onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                >
+                  <option value="portal">Portal</option>
+                  <option value="email">Email</option>
+                  <option value="phone">Teléfono</option>
+                  <option value="chat">Chat</option>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowNewTicketDialog(false)}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={submitting}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {submitting ? 'Creando...' : 'Crear Ticket'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
